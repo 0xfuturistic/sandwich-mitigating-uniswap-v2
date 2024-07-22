@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.10;
+pragma solidity >=0.6.2;
 
 import "forge-std/Test.sol";
 import "../src/UniswapV2Factory.sol";
@@ -19,7 +19,7 @@ contract UniswapV2PairTest is Test {
         token0 = new ERC20Mintable("Token A", "TKNA");
         token1 = new ERC20Mintable("Token B", "TKNB");
 
-        UniswapV2Factory factory = new UniswapV2Factory();
+        UniswapV2Factory factory = new UniswapV2Factory(address(this));
         address pairAddress = factory.createPair(
             address(token0),
             address(token1)
@@ -50,7 +50,7 @@ contract UniswapV2PairTest is Test {
     }
 
     function assertReserves(uint112 expectedReserve0, uint112 expectedReserve1)
-        internal
+        internal view
     {
         (uint112 reserve0, uint112 reserve1, ) = pair.getReserves();
         assertEq(reserve0, expectedReserve0, "unexpected reserve0");
@@ -60,7 +60,7 @@ contract UniswapV2PairTest is Test {
     function assertCumulativePrices(
         uint256 expectedPrice0,
         uint256 expectedPrice1
-    ) internal {
+    ) internal view {
         assertEq(
             pair.price0CumulativeLast(),
             expectedPrice0,
@@ -87,7 +87,7 @@ contract UniswapV2PairTest is Test {
             : 0;
     }
 
-    function assertBlockTimestampLast(uint32 expected) internal {
+    function assertBlockTimestampLast(uint32 expected) internal view {
         (, , uint32 blockTimestampLast) = pair.getReserves();
 
         assertEq(blockTimestampLast, expected, "unexpected blockTimestampLast");
@@ -544,9 +544,6 @@ contract Flashloaner {
     }
 
     function uniswapV2Call(
-        address sender,
-        uint256 amount0Out,
-        uint256 amount1Out,
         bytes calldata data
     ) public {
         address tokenAddress = abi.decode(data, (address));
