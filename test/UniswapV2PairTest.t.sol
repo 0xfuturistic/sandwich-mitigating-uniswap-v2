@@ -148,7 +148,7 @@ contract UniswapV2PairTest is Test {
         token0.transfer(address(pair), 1000);
         token1.transfer(address(pair), 1000);
 
-        vm.expectRevert(encodeError("InsufficientLiquidityMinted()"));
+        vm.expectRevert("UniswapV2: INSUFFICIENT_LIQUIDITY_MINTED"); 
         pair.mint(address(this));
     }
 
@@ -246,7 +246,7 @@ contract UniswapV2PairTest is Test {
         pair.mint(address(this));
 
         vm.prank(address(0xdeadbeef));
-        vm.expectRevert(encodeError("InsufficientLiquidityBurned()"));
+        vm.expectRevert("UniswapV2: INSUFFICIENT_LIQUIDITY_BURNED");
         pair.burn(address(this));
     }
 
@@ -332,7 +332,7 @@ contract UniswapV2PairTest is Test {
         token1.transfer(address(pair), 2 ether);
         pair.mint(address(this));
 
-        vm.expectRevert(encodeError("InsufficientOutputAmount()"));
+        vm.expectRevert("UniswapV2: INSUFFICIENT_OUTPUT_AMOUNT");
         pair.swap(0, 0, address(this), "");
     }
 
@@ -341,10 +341,10 @@ contract UniswapV2PairTest is Test {
         token1.transfer(address(pair), 2 ether);
         pair.mint(address(this));
 
-        vm.expectRevert(encodeError("InsufficientLiquidity()"));
+        vm.expectRevert("UniswapV2: INSUFFICIENT_LIQUIDITY");
         pair.swap(0, 2.1 ether, address(this), "");
 
-        vm.expectRevert(encodeError("InsufficientLiquidity()"));
+        vm.expectRevert("UniswapV2: INSUFFICIENT_LIQUIDITY");
         pair.swap(1.1 ether, 0, address(this), "");
     }
 
@@ -376,7 +376,7 @@ contract UniswapV2PairTest is Test {
 
         token0.transfer(address(pair), 0.1 ether);
 
-        vm.expectRevert(encodeError("InvalidK()"));
+        vm.expectRevert("UniswapV2: K");
         pair.swap(0, 0.36 ether, address(this), "");
 
         assertEq(
@@ -399,7 +399,7 @@ contract UniswapV2PairTest is Test {
 
         token0.transfer(address(pair), 0.1 ether);
 
-        vm.expectRevert(encodeError("InvalidK()"));
+        vm.expectRevert("UniswapV2: K");
         pair.swap(0, 0.181322178776029827 ether, address(this), "");
     }
 
@@ -544,6 +544,9 @@ contract Flashloaner {
     }
 
     function uniswapV2Call(
+        address sender,
+        uint256 amount0Out,
+        uint256 amount1Out,
         bytes calldata data
     ) public {
         address tokenAddress = abi.decode(data, (address));
