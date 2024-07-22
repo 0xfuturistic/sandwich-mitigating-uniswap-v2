@@ -494,6 +494,94 @@ contract UniswapV2PairTest is Test {
         assertEq(token1.balanceOf(address(fl)), 0);
         assertEq(token1.balanceOf(address(pair)), 2 ether + flashloanFee);
     }
+
+    function testSandwichAttackFails() public {
+        // first buy
+        token0.transfer(address(pair), 1 ether);
+        token1.transfer(address(pair), 2 ether);
+        pair.mint(address(this));
+
+        token1.transfer(address(pair), 0.2 ether);
+        pair.swap(0.09 ether, 0, address(this), "");
+
+        // second buy
+        token0.transfer(address(pair), 1 ether);
+        token1.transfer(address(pair), 2 ether);
+        pair.mint(address(this));
+
+        token0.transfer(address(pair), 0.1 ether);
+        pair.swap(0.09 ether, 0, address(this), "");
+
+        // sell
+        token0.transfer(address(pair), 0.1 ether);
+        vm.expectRevert("UniswapV2: Swap violates sequencing rule");
+        pair.swap(0, 0.09 ether, address(this), "");
+    }
+
+    function testComplexSandwichAttackFails() public {
+        // first buy
+        token0.transfer(address(pair), 1 ether);
+        token1.transfer(address(pair), 2 ether);
+        pair.mint(address(this));
+
+        token0.transfer(address(pair), 0.1 ether);
+        pair.swap(0.09 ether, 0, address(this), "");
+
+        // sell
+        token0.transfer(address(pair), 0.1 ether);
+        pair.swap(0, 0.09 ether, address(this), "");
+
+        // second buy
+        token0.transfer(address(pair), 1 ether);
+        token1.transfer(address(pair), 2 ether);
+        pair.mint(address(this));
+
+        token0.transfer(address(pair), 0.1 ether);
+        pair.swap(0.09 ether, 0, address(this), "");
+
+        // third buy
+        token0.transfer(address(pair), 1 ether);
+        token1.transfer(address(pair), 2 ether);
+        pair.mint(address(this));
+
+        token0.transfer(address(pair), 0.1 ether);
+        pair.swap(0.09 ether, 0, address(this), "");
+
+        // sell
+        token0.transfer(address(pair), 0.1 ether);
+        vm.expectRevert("UniswapV2: Swap violates sequencing rule");
+        pair.swap(0, 0.09 ether, address(this), "");
+    }
+
+    function testEmptySells() public {
+        // first buy
+        token0.transfer(address(pair), 1 ether);
+        token1.transfer(address(pair), 2 ether);
+        pair.mint(address(this));
+
+        token0.transfer(address(pair), 0.1 ether);
+        pair.swap(0.09 ether, 0, address(this), "");
+
+        // sell
+        token0.transfer(address(pair), 0.1 ether);
+        pair.swap(0, 0.09 ether, address(this), "");
+
+        // second buy
+        token0.transfer(address(pair), 1 ether);
+        token1.transfer(address(pair), 2 ether);
+        pair.mint(address(this));
+
+        token0.transfer(address(pair), 0.1 ether);
+        pair.swap(0.09 ether, 0, address(this), "");
+
+        // third buy
+        token0.transfer(address(pair), 1 ether);
+        token1.transfer(address(pair), 2 ether);
+        pair.mint(address(this));
+
+        token0.transfer(address(pair), 0.1 ether);
+        pair.swap(0.09 ether, 0, address(this), "");
+    }
 }
 
 contract TestUser {
