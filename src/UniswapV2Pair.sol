@@ -21,7 +21,7 @@ contract UniswapV2Pair is UniswapV2ERC20 {
         uint blockNumber;
         uint112 reserve0Start;
         bool emptyBuysOrSells;
-        SwapType lastSwapType;
+        SwapType tailSwapType;
     }
 
     uint public constant MINIMUM_LIQUIDITY = 10**3;
@@ -214,8 +214,8 @@ contract UniswapV2Pair is UniswapV2ERC20 {
             SwapType swapType = amount0Out > 0 ? SwapType.BUY : SwapType.SELL;
 
             if (sequencingRuleInfo.emptyBuysOrSells) {
-                // If we have run out of buys or sells, the swap type must be the same as for the last swap 
-                require(swapType == sequencingRuleInfo.lastSwapType, 'UniswapV2: Swap violates sequencing rule');
+                // If we have run out of buys or sells, the swap type must be the same as for the tail swap
+                require(swapType == sequencingRuleInfo.tailSwapType, 'UniswapV2: Swap violates sequencing rule');
             } else {
                 // Find the required swap type so we can validate against it
                 SwapType requiredSwapType = _reserve0 >= sequencingRuleInfo.reserve0Start ? SwapType.SELL : SwapType.BUY;
@@ -224,8 +224,8 @@ contract UniswapV2Pair is UniswapV2ERC20 {
                     // We must have run out of buys or sells
                     sequencingRuleInfo.emptyBuysOrSells = true;
 
-                    // Pass information to the next swap
-                    sequencingRuleInfo.lastSwapType = swapType;
+                    // Set the tail swap type
+                    sequencingRuleInfo.tailSwapType = swapType;
                 }
             }
         }
