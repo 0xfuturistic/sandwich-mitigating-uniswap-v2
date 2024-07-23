@@ -22,12 +22,12 @@ After each swap, the protocol runs the following algorithm:
 3. Else, if we hadn't run out of buy or sell orders before the swap, compare the current reserves to the initial state to determine the required order type (i.e., a buy or sell) according to the sequencing rule.
     - If the swap types don't match, register that we must have run out of buy or sell orders. The type of the swap now makes up the type of the swaps in the tail of the permutation under the GSR.
 
-The algorithm is implemented in https://github.com/0xfuturistic/sandwich-resistant-uniswap-v2/blob/main/src/UniswapV2Pair.sol#L203C1-L231C10
+The algorithm is implemented in https://github.com/0xfuturistic/sandwich-resistant-uniswap-v2/blob/main/src/UniswapV2Pair.sol#L203C1-L231C10. It runs in constant time effectively as a postHook in the swap function. It does not have any external depedencies, and it does not dependent on any off-chain computation, trust in external parties, or additional infrastructure.
 
 This solution is effective because it:
 
 - Protects against sandwich attacks comprehensively.
-- Requires no off-chain computation, trust in external parties, or additional infrastructure.
+- Constant-time overhead.
 - Preserves atomic composability.
 - Requires minimal changes to the existing Uniswap v2 codebase.
 
