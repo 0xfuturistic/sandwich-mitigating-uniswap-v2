@@ -16,11 +16,11 @@ The implementation involves adding about 24 lines of code to the swap function, 
 
 After each swap, the protocol runs the following algorithm:
 
-1. Check if we've run out of buy or sell orders.
-    1. If so, validate that the remaining orders are of the type we haven’t run out of.
-2. If not, compare current state to initial state to determine required order type (i.e., a buy or sell) according to the sequencing rule.
-3. Validate the swap matches the required type.
-4. If validation fails, register that we must have run out of buy or sell orders.
+1. If this is a new block, reset the sequencing rule info, setting the initial state to the current state.
+2. Else, check whether we had already run out of buy or sell orders before the swap.
+    - If we had, validate that the type of the swap matches the type of the previous swap. By induction, this ensures that swap matches the tail of a swap sequence under the GSR.
+3. Else, if we hadn't run out of buy or sell orders before the swap, compare the current state to the initial state to determine the required order type (i.e., a buy or sell) according to the sequencing rule.
+    - If the swap types don't match, register that we must have run out of buy or sell orders. The type of the swap now makes up the tail of the swap sequence under the GSR.
 
 The algorithm is implemented in https://github.com/0xfuturistic/sandwich-resistant-uniswap-v2/blob/main/src/UniswapV2Pair.sol#L203C1-L231C10
 
