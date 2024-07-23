@@ -12,13 +12,13 @@ Here's how it works:
     2. The user's execution price is at least as good as if their swap was alone in the block.
     3. If the price is worse, the proposer doesn't profit from including the transaction.
 
-The implementation involves adding about 24 lines of code to the swap function, introducing only a constant time overhead.
+The implementation involves adding 24 lines of code to the swap function, introducing only a constant time overhead.
 
 After each swap, the protocol runs the following algorithm:
 
-1. If this is a new block, reset the sequencing rule info, setting the initial state to the current state.
+1. If this is a new block, reset the sequencing rule info, setting the initial state to the current reserves of token 0 for the pair.
 2. Else, check whether we had already run out of buy or sell orders before the swap.
-    - If we had, validate that the type of the swap matches the type of the previous swap. By induction, this ensures that swap matches the tail of a swap sequence under the GSR.
+    - If we had, validate that the type (i.e., buy or sell) of the swap matches the type of the swaps in the tail under the GSR.
 3. Else, if we hadn't run out of buy or sell orders before the swap, compare the current state to the initial state to determine the required order type (i.e., a buy or sell) according to the sequencing rule.
     - If the swap types don't match, register that we must have run out of buy or sell orders. The type of the swap now makes up the tail of the swap sequence under the GSR.
 
@@ -26,9 +26,11 @@ The algorithm is implemented in https://github.com/0xfuturistic/sandwich-resista
 
 This solution is effective because it:
 
-- Protects against sandwich attacks effectively.
+- Protects against sandwich attacks successfully.
 - Requires no off-chain computation, trust in external parties, or additional infrastructure.
 - Preserves atomic composability.
 - Requires minimal changes to the existing Uniswap v2 codebase.
 
 Multi-block MEV remains a consideration, however, where a consecutive-blocks proposer could influence the benchmark price for the block used for evaluating the user’s execution price. Nevertheless, this can be addressed by updating this value less frequently or using a moving average over several past blocks instead. Either approach would raise the costs associated with this vector.
+
+Overall, this modification provides strong guarantees about execution quality while making sandwich attacks structurally unfeasible, all with minimal changes to the existing Uniswap v2 contracts.
