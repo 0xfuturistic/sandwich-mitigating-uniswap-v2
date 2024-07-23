@@ -1,6 +1,6 @@
 # 🥪🦄 Sandwich-Resistant Uniswap V2
 
-> Background: https://arxiv.org/pdf/2209.15569
+> **Background:** Ferreira, Matheus V. X. and David C. Parkes. “Credible Decentralized Exchange Design via Verifiable Sequencing Rules.” https://arxiv.org/pdf/2209.15569
 
 The core idea is to modify the swap function to enforce a verifiable sequencing rule, the Greedy Sequencing Rule (GSR), which prevents sandwich attacks.
 
