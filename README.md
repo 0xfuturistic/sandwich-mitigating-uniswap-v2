@@ -12,9 +12,9 @@ The GSR provides strong execution guarantees for users. It leverages a key prope
 
 For any user transaction A included in a block, the GSR ensures one of the following ([Theorem 5.2](#theorem-52-greedy-sequencing-rule-gsr)):
 
-1. Users can efficiently detect if the proposer didn't follow the rule.
-2. A's execution price is at least as good as if A was the only transaction in the block.
-3. If A's price is worse than the standalone price, the proposer doesn't gain from including A.
+1. The user can efficiently detect if the proposer didn't respect the rule.
+2. The execution price of $A$ for the user is at least as good as if $A$ was the only transaction in the block.
+3. The execution price of $A$ is worse than this standalone price but the proposer does not gain when including $A$ in the block.
 
 ### GSR Algorithm
 
@@ -72,7 +72,7 @@ function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data)
     // ... continue with swap execution ...
 }
 ```
-This implementation ensures that the GSR's guarantees are maintained throughout the entire block, even when dealing with an uneven distribution of buy and sell orders. It's computationally efficient and verifiable, allowing anyone to check if the new transaction leads to a valid ordering, following from an existing valid ordering. It does not have any external depedencies, and it does not depend on any off-chain computation, oracles, or additional infrastructure.
+This implementation ensures that the GSR's guarantees are maintained throughout the entire block, even when dealing with an uneven distribution of buy and sell orders. It's computationally efficient and verifiable, allowing anyone to check if the new swap leads to a valid ordering. It does not have any external depedencies, and it does not depend on any off-chain computation, oracles, or additional infrastructure.
 
 
 ## Benefits
@@ -96,11 +96,11 @@ These approaches could increase the cost and complexity of such attacks:
 
 # Appendix
 
-These theorems are from the original paper, which also contains the proofs.
+These were obtained from the original paper, which also contains proofs.
 
 ### Theorem 4.2: Existence of Risk-Free Profits
 
-For a class of liquidity pool exchanges (that includes Uniswap), for any sequencing rule, there are instances where the miner has a profitable risk-free undetectable deviation.
+For a class of liquidity pool exchanges (that includes Uniswap), for any sequencing rule, there are instances where the proposer has a profitable risk-free undetectable deviation.
 
 ### Theorem 5.1: Duality Theorem
 Consider any liquidity pool exchange with potential $\phi$. For any pair of states $X, X' ∈ L_{c}(\phi)$, either:
@@ -111,7 +111,7 @@ where $L_{c}(\phi)$ is the collection of reachable states with the potential $\p
 
 ### Theorem 5.2: Greedy Sequencing Rule (GSR)
 
-We specify a sequencing rule (the Greedy Sequencing Rule) such that, for any valid execution ordering, then for any user transaction $A$ that the miner includes in the block, it must be that either (1) the user efficiently detects the miner did not respect the sequencing rule, or (2) the execution price of $A$ for the user is at least as good as if $A$ was the only transaction in the block, or (3) the execution price of $A$ is worse than this standalone price but the miner does not gain when including $A$ in the block.
+We specify a sequencing rule (the Greedy Sequencing Rule) such that, for any valid execution ordering, then for any user transaction $A$ that the proposer includes in the block, it must be that either (1) the user efficiently detects the proposer did not respect the sequencing rule, or (2) the execution price of $A$ for the user is at least as good as if $A$ was the only transaction in the block, or (3) the execution price of $A$ is worse than this standalone price but the proposer does not gain when including $A$ in the block.
 
 ### Algorithm 4: GSR Verifier
 
