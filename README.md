@@ -10,7 +10,7 @@ Uniswap V2 is minimally modified to implement the Greedy Sequencing Rule (GSR), 
 
 The GSR provides strong execution guarantees for users. It leverages a key property of two-token liquidity pools: the Duality Theorem ([Theorem 5.1](#theorem-51-duality-theorem)), which states that at any given state, either all buy orders or all sell orders will receive a better execution price than at the initial state.
 
-For any user transaction A included in a block, the GSR ensures one of the following ([Theorem 5.2](#theorem-52-greedy-sequencing-rule-gsr)):
+For any user transaction $A$ included in a block, the GSR ensures one of the following ([Theorem 5.2](#theorem-52-greedy-sequencing-rule-gsr)):
 
 1. The user can efficiently detect if the proposer didn't respect the rule.
 2. The execution price of $A$ for the user is at least as good as if $A$ was the only transaction in the block.
