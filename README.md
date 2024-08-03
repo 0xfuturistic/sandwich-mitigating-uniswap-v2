@@ -103,7 +103,7 @@ These were obtained from the original paper, which also contains proofs.
 For a class of liquidity pool exchanges (that includes Uniswap), for any sequencing rule, there are instances where the proposer has a profitable risk-free undetectable deviation.
 
 ### Theorem 5.1: Duality Theorem
-Consider any liquidity pool exchange with potential $\phi$. For any pair of states $X, X' ∈ L_{c}(\phi)$, either:
+Consider any liquidity pool exchange with potential $\phi$. For any pair of states $X, X' ∈ L_{c}(\phi)$, it must be one of the following:
 - any buy order receives a better execution at $X$ than $X'$, or
 - any sell order receives a better execution at $X$ than $X'$.
 
@@ -111,13 +111,18 @@ where $L_{c}(\phi)$ is the collection of reachable states with the potential $\p
 
 ### Theorem 5.2: Greedy Sequencing Rule (GSR)
 
-We specify a sequencing rule (the Greedy Sequencing Rule) such that, for any valid execution ordering, then for any user transaction $A$ that the proposer includes in the block, it must be that either (1) the user efficiently detects the proposer did not respect the sequencing rule, or (2) the execution price of $A$ for the user is at least as good as if $A$ was the only transaction in the block, or (3) the execution price of $A$ is worse than this standalone price but the proposer does not gain when including $A$ in the block.
+We specify a sequencing rule (the Greedy Sequencing Rule) such that, for any valid execution ordering, then for any user transaction $A$ that the proposer includes in the block, it must be one of the following:
+1. The user efficiently detects the proposer did not respect the sequencing rule.
+2. The execution price of $A$ for the user is at least as good as if $A$ was the only transaction in the block.
+3. The execution price of $A$ is worse than this standalone price but the proposer does not gain when including $A$ in the block.
 
 ### Algorithm 4: GSR Verifier
 
+It outputs $True$ or $False$, according to the following:
+
 1. For $t=1,2,\ldots,|T|$:
     1. If $T_{t}, T_{t+1} \ldots, T_{|T|}$ are orders of the same type (i.e., all are buys or all are sells orders), then output $True$.
-    2. If $X_{t-1,1} >= X_{0,1}$ and $T_{t}$ is a buy order, then output $False$.
-    3. If $X_{t-1,1} <= X_{0,1}$ and $T_{t}$ is a sell order, then output $False$.
+    2. If $X_{t-1,1} \ge X_{0,1}$ and $T_{t}$ is a buy order, then output $False$.
+    3. If $X_{t-1,1} < X_{0,1}$ and $T_{t}$ is a sell order, then output $False$.
     4. Let $X_{t}$ be the state after $T_{t}$ executes on $X_{t-1}$.
 2. Output $True$.
