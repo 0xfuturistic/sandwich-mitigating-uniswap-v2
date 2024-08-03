@@ -1,6 +1,0 @@
-SandwichResistanceTest:test_blockTransition_succeeds() (gas: 173247)
-SandwichResistanceTest:test_complexSandwich_fails() (gas: 191853)
-SandwichResistanceTest:test_emptyBuy_succeeds() (gas: 140057)
-SandwichResistanceTest:test_emptySells_succeeds() (gas: 149417)
-SandwichResistanceTest:test_simpleSandwich_fails() (gas: 150606)
-SandwichResistanceTest:test_simpleSandwich_nextBlock_fails() (gas: 192700)
