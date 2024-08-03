@@ -67,4 +67,86 @@ contract SandwichResistanceTest is Test {
         vm.expectRevert("UniswapV2: Swap violates sequencing rule");
         pair.swap(0, 0.99 ether, address(this), "");
     }
+
+    /// @notice Tests for empty buys in the same block
+    function test_emptyBuy_succeeds() public {
+        // first buy
+        token1.transfer(address(pair), 1 ether);
+        pair.swap(0.99 ether, 0, address(this), "");
+
+        // second buy in the same block
+        token1.transfer(address(pair), 1 ether);
+        pair.swap(0.83 ether, 0, address(this), "");
+
+        // third buy in the same block
+        token1.transfer(address(pair), 1 ether);
+        pair.swap(0.59 ether, 0, address(this), "");
+    }
+
+    /// @notice Tests for empty sells in the same block
+    function test_emptySells_succeeds() public {
+        // first sell
+        token0.transfer(address(pair), 1 ether);
+        pair.swap(0, 0.99 ether, address(this), "");
+
+        // second sell in the same block
+        token0.transfer(address(pair), 1 ether);
+        pair.swap(0, 0.83 ether, address(this), "");
+
+        // third sell in the same block
+        token1.transfer(address(pair), 1 ether);
+        pair.swap(0, 0.59 ether, address(this), "");
+    }
+
+    /// @notice Tests for correct handling of block transition
+    function test_blockTransition_succeeds() public {
+        // first buy in block N
+        token1.transfer(address(pair), 1 ether);
+        pair.swap(0.99 ether, 0, address(this), "");
+
+        // move to next block N+1
+        vm.roll(block.number + 1);
+
+        // sell in block N+1
+        token0.transfer(address(pair), 1 ether);
+        pair.swap(0, 0.99 ether, address(this), "");
+
+        // move to next block
+        vm.roll(block.number + 1);
+
+        // buy in block N+2
+        token1.transfer(address(pair), 1 ether);
+        pair.swap(0.99 ether, 0, address(this), "");
+
+        // sell in block N+1
+        token0.transfer(address(pair), 1 ether);
+        pair.swap(0, 0.99 ether, address(this), "");
+    }
+
+    /// @notice Tests a sandwich attack in the next block
+    function test_simpleSandwich_nextBlock_fails() public {
+        // first buy in block N
+        token1.transfer(address(pair), 1 ether);
+        pair.swap(0.99 ether, 0, address(this), "");
+
+        // second buy in block N
+        token1.transfer(address(pair), 1 ether);
+        pair.swap(0.99 ether, 0, address(this), "");
+
+        // move to next block N+1
+        vm.roll(block.number + 1);
+
+        // first buy in block N+1
+        token1.transfer(address(pair), 1 ether);
+        pair.swap(0.99 ether, 0, address(this), "");
+
+        // second buy in block N+1
+        token0.transfer(address(pair), 1 ether);
+        pair.swap(0.83 ether, 0, address(this), "");
+
+        // sell in block N+1 should lead to a sandwich
+        token0.transfer(address(pair), 1 ether);
+        vm.expectRevert("UniswapV2: Swap violates sequencing rule");
+        pair.swap(0, 0.99 ether, address(this), "");
+    }
 }
