@@ -6,36 +6,37 @@
 
 Uniswap V2 is minimally modified to implement the Greedy Sequencing Rule (GSR), a verifiable sequencing rule that mitigates sandwich attacks.
 
-## The Greedy Sequencing Rule
+## The Greedy Sequencing Rule (GSR)
 
-The GSR is a specific implementation of a verifiable sequencing rule that provides strong execution guarantees for users. For a user transaction $A$ that the proposer includes in the block (Theorem 5.2, p. 22), it guarantees that for a valid ordering it must be that either:
+The GSR is a verifiable sequencing rule that provides strong execution guarantees for users. For a user transaction $A$ that the proposer includes in the block, the GSR ensures one of the following (Theorem 5.2, p. 22):
 
-1. the user efficiently detects the proposer did not respect the sequencing rule, or
-2. the execution price of $A$ for the user is at least as good as if $A$ was the only transaction in the block, or
-3. the execution price of $A$ is worse than this standalone price but the proposer does not gain when including A in the block.
+1. The user can efficiently detect if the proposer didn't respect the rule.
+2. The execution price of $A$ for the user is at least as good as if $A$ was the only transaction in the block.
+3. The execution price of $A$ is worse than this standalone price but the proposer does not gain when including $A$ in the block.
 
-It works as follows: 
+The rule proceeds as follows:
 
 1. Initialize an empty execution ordering $T$.
 2. Partition outstanding transactions into buy orders ($B_{buy}$) and sell orders ($B_{sell}$).
 3. While both $B_{buy}$ and $B_{sell}$ are non-empty:
     - If current token 1 reserves ≥ initial token 1 reserves:
-        - Append any order from $B_{buy}$ to $T$
+        - Append any order from $B_{buy}$ to $T$ and remove it from $B_{buy}$.
     - Else:
-        - Append any order from $B_{sell}$ to $T$
+        - Append any order from $B_{sell}$ to $T$ and remove it from $B_{sell}$.
 4. If any orders remain, append them to $T$ in any order.
 
-The rule exploits a key property of two-token liquidity pools: at any state, either all buy orders or all sell orders will receive a better execution price than at the initial state (Theorem 5.1 "Duality Theorem", p. 20).
+The rule exploits the Duality Theorem (Theorem 5.1, p. 20): at any state in a two-token liquidity pool, either all buy orders or all sell orders will receive a better execution price than at the initial state.
 
 ## Implementation
 
-The goal is for the algorithm to check new transactions in real-time, determining whether a new transaction violates the GSR. This differs from the original algorithm in the paper, which checks the entire order of transactions in a block. Instead of checking all the past transactions every time we receive a new one to determine whether the order is valid, we assume the state up to that point is valid and only check the new transaction. If the new transaction is valid, the order after the inclusion of the transaction is valid. If the new transaction is invalid, the order is invalid. This approach is more efficient than checking the entire block, and leads to a constant-time verification algorithm for new swaps, instead of a linear-time algorithm, as in the original paper.
+Our implementation modifies Uniswap V2 to incorporate the GSR. Unlike the original paper's verifier (Algorithm 4), which checks the entire order of transactions in a block every time, our approach verifies new transactions in real-time. This results in a constant-time verification algorithm for new transactions, improving efficiency over the linear-time algorithm in the original paper.
 
-The implementation of the entire algorithm involves adding 24 lines of code to the swap function.
+The key changes are in the swap function, adding 24 lines of code:
 
 ```solidity
 function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external lock {
-    ...
+    // ... existing swap logic ...
+
     if (block.number > sequencingRuleInfo.blockNumber) {
         // We have a new block, so we must reset the sequencing rule info
         sequencingRuleInfo.blockNumber = block.number;
@@ -61,10 +62,13 @@ function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data)
             }
         }
     }
+
+    // ... continue with swap execution ...
 }
 ```
 
-This implementation is computationally efficient and verifiable, allowing anyone to check if the execution ordering follows the GSR. It does not have any external depedencies, and it does not dependent on any off-chain computation, trust in external parties, or additional infrastructure.
+This implementation is computationally efficient and verifiable, allowing anyone to check if the new transaction leads to a valid ordering, following from an existing valid ordering according to the GSR. It does not have any external depedencies, and it does not dependent on any off-chain computation, trust in external parties, or additional infrastructure.
+
 
 ## Benefits
 
