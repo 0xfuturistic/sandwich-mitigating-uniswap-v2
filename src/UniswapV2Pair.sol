@@ -221,7 +221,7 @@ contract UniswapV2Pair is UniswapV2ERC20 {
 
             if (sequencingRuleInfo.emptyBuysOrSells) {
                 // If we have run out of buys or sells, the swap type must be the same as for the tail swap
-                require(swapType == sequencingRuleInfo.tailSwapType, "UniswapV2: Swap violates sequencing rule");
+                require(swapType == sequencingRuleInfo.tailSwapType, "UniswapV2: Swap violates GSR");
             } else {
                 // Find the required swap type so we can validate against it
                 SwapType requiredSwapType = _reserve0 >= sequencingRuleInfo.reserve0Start ? SwapType.SELL : SwapType.BUY;

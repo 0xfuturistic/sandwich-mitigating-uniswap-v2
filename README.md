@@ -52,7 +52,7 @@ function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data)
             // In the tail, all remaining swaps must be of the same type.
             // This occurs when we've run out of either buy or sell orders.
             // The tailSwapType represents the type of swaps in the tail.
-            require(swapType == sequencingRuleInfo.tailSwapType, "UniswapV2: Swap violates sequencing rule");
+            require(swapType == sequencingRuleInfo.tailSwapType, "UniswapV2: Swap violates GSR");
         } else {
             // Determine the required swap type based on current reserves
             // This implements the core logic of the Greedy Sequencing Rule
