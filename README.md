@@ -106,7 +106,7 @@ These were obtained from the original paper, which also contains proofs.
 For a class of liquidity pool exchanges (that includes Uniswap), for any sequencing rule, there are instances where the proposer has a profitable risk-free undetectable deviation.
 
 ### Theorem 5.1: Duality Theorem
-Consider any liquidity pool exchange with potential $\phi$. For any pair of states $X, X' ∈ L_{c}(\phi)$, it must be either:
+Consider any liquidity pool exchange with potential $\phi$. For any pair of states $X, X' ∈ L_{c}(\phi)$, it must be that either:
 - any buy order receives a better execution at $X$ than $X'$, or
 - any sell order receives a better execution at $X$ than $X'$.
 
