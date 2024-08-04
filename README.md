@@ -10,27 +10,25 @@ Uniswap V2 is minimally modified to implement the Greedy Sequencing Rule (GSR), 
 
 The GSR provides strong execution guarantees for users. It leverages a key property of two-token liquidity pools: the Duality Theorem.
 
-> **Theorem 5.1** (Duality Theorem)**.** For any pair of states $X, X'$ in a liquidity pool exchange with potential $\phi$, either: <br>- All buy orders receive better execution at $X$ than $X'$, or <br>- All sell orders receive better execution at $X$ than $X'$. 
+> **Theorem 5.1** (Duality Theorem)**.** For any pair of states $X, X'$ in a liquidity pool exchange with potential $\phi$, either: <br>- Any buy orders receives a better execution at $X$ than $X'$, or <br>- Any sell orders receives a better execution at $X$ than $X'$. 
 
-This property ensures that regardless of the potential $\phi$, there will always be an order type (i.e., buy or sell) that is better executed at $X$ than $X'$. We leverage this property to ensure that for as long as there are available buy or sell orders, the order that is better executed at $X$ than $X'$ should be executed. However, if we ran out of buy or sell orders, we must violate this commitment, but we commit to only including orders of the same type (as the type not run out of out) for the remainder of the block.
+This theorem forms the foundation of the GSR. The rule operates as follows:
 
-Formally, the GSR ensures the following:
+- Execute the type of order (buy or sell) that's getting the better price.
+- Continue this process until one type of order is exhausted.
+- Once one type is exhausted, only allow the other type for the rest of the block.
+
+By following these rules, the GSR ensures:
 
 > **Theorem 5.2** Greedy Sequencing Rule (GSR)**.** We specify a sequencing rule (the Greedy Sequencing Rule) such that, for any valid execution ordering, then for any user transaction $A$ that the proposer includes in the block, it must be one of the following: <br>1. The user efficiently detects the proposer did not respect the sequencing rule. <br>2. The execution price of $A$ is at least as good as if $A$ was the only transaction in the block. <br>3. The execution price of $A$ is worse but the proposer does not gain when including $A$ in the block.
 
-From a practical standpoint, the proposer does not gain when including $A$ in the block if we've run out of buy or sell orders.
-
-Consider the following example:
-1. The proposer includes the swap for the first side of the sandwich attack (a buy order).
-2. Then, it includes the user's swap (a buy order).
-    - The GSR recognizes that the user's swap contradicts the GSR, because the swap order that would have received a better execution price at $X$ than $X'$ was a sell order instead of another buy order. Therefore, the algorithm "deduces" that the proposer must have run out of sell orders, so it commits the proposer to only include buy orders for the remainder of the block after that swap (the tail).
-3. The proposer tries to include the swap for the second side of the sandwich attack (a sell order), but it fails.
-    - The swap type (sell) would be blocked by the GSR, because the GSR requires that the swap type be the same for the remainder of the block (i.e., for the tail). This would break the commitment the proposer made to only include buy orders for the remainder of the block after registering as having run out of sell orders.
-
+From a practical standpoint, the proposer can't gain when including $A$ in the block if we've run out of buy or sell orders because the GSR doesn't allow them to include the final leg of the sandwich attack (a sell order) in the same block.
 
 ### GSR Algorithm
 
-This is the algorithm that the GSR uses to determine the execution ordering for a set of swaps $B$ for a block. It is a recursive algorithm that takes as input the set of swaps in the same block for a `UniswapV2Pair` instance, and outputs an execution ordering $(T_1 , … , T_{|B|})$ (a permutation of the swaps in $B$).
+To "produce" a valid execution ordering, the GSR uses a recursive algorithm that takes as input the set of swaps in the same block for a `UniswapV2Pair` instance and outputs an execution ordering $(T_1 , … , T_{|B|})$ (a permutation of the swaps in $B$).
+
+The algorithm is as follows:
 
 1. Initialize an empty execution ordering $T$.
 2. Partition outstanding transactions into buy orders ($B_{buy}$) and sell orders ($B_{sell}$).
@@ -43,7 +41,7 @@ This is the algorithm that the GSR uses to determine the execution ordering for 
 
 ## Implementation
 
-This implementation modifies Uniswap V2 to enforce the GSR at the smart contract level. Unlike the [original paper's verifier](#original-gsr-verifier), which checks the entire order of transactions from the beginning of the block every time, this approach verifies new transactions in real-time. This results in a constant-time verification algorithm for new transactions, improving efficiency over the linear-time algorithm in the original paper.
+This implementation modifies Uniswap V2 to enforce the GSR at the smart contract level. Unlike the [original paper's verifier](#original-gsr-verifier), which checks the entire order of transactions from the beginning of the block every time, this approach verifies new transactions in real time. This results in a constant-time verification algorithm for new transactions, improving efficiency over the linear-time algorithm in the original paper.
 
 The key changes are in `UniswapV2Pair`'s swap function, adding to it only 16 lines of code (uncommented). [`SwapType`](#swaptype-enum) and [`SequencingRuleInfo`](#sequencingruleinfo-struct) are defined in the [Appendix](#appendix). If a swap violates the GSR, the transaction reverts.
 
@@ -89,8 +87,17 @@ function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data)
 }
 ```
 
-This implementation ensures that the GSR's guarantees are maintained throughout the entire block, even when dealing with an uneven distribution of buy and sell orders. It's computationally efficient and verifiable, allowing anyone to check if the new swap leads to a valid ordering. It does not have any external depedencies, and it does not depend on any off-chain computation, oracles, or additional infrastructure.
+This implementation ensures that the GSR's guarantees are maintained throughout the entire block, even when dealing with an uneven distribution of buy and sell orders. It's computationally efficient and verifiable, allowing anyone to check if the new swap leads to a valid ordering. It does not have any external dependencies, and it does not depend on any off-chain computation, oracles, or additional infrastructure.
 
+## How does it prevent sandwich attacks?
+
+Consider the following example, where $T$ is an execution ordering over swaps in the same block for a `UniswapV2Pair` instance:
+1. The proposer exexcutes the swap for the first side of the sandwich attack (a buy order) as $T_1$.
+2. Then, it executes the user's swap (a buy order) as $T_2$.
+    - The GSR recognizes that the swap type that would have received a better execution price at $X$ than $X'$ was a sell order instead of another buy order.
+    - Therefore, the GSR assumes that the proposer must have run out of sell orders, so it binds the proposer to only include buy orders for the remainder of the block, the tail, starting from $T_2$.
+3. The proposer tries to execute the swap for the final side of the sandwich attack (a sell order) as $T_3$ but fails.
+    - The order type (sell) would be blocked by the GSR because the GSR requires that the swap type be buy for orders in the tail, which is where $T_3$ belongs to as it follows $T_2$.
 
 ## Benefits
 
@@ -108,7 +115,7 @@ This implementation ensures that the GSR's guarantees are maintained throughout 
 
 
 2. The proposer needs to follow the [GSR algorithm](#gsr-algorithm), taking as set of transactions the swaps in the same block for a `UniswapV2Pair` instance. Concretely, they'd take a set of swaps $B$ and an initial state $X_0$ (denoting the state before a swap in this block executes on the chain), and recursively construct an execution ordering $(T_1 , … , T_{|B|})$ (a permutation of the swaps in $B$). 
-As the paper [_MEV Makes Everyone Happy under Greedy Sequencing Rule_](https://arxiv.org/pdf/2309.12640) shows, for the scenario where there is no trading fee, a polynomial time algorithm for a proposer to compute an optimal strategy is given; In contrast, when the fraction of trading fees is any constant larger than 0 (e.g., f = 0.3% in most Uniswap pools), it is NP-hard to find an optimal strategy.
+As the paper [_MEV Makes Everyone Happy under Greedy Sequencing Rule_](https://arxiv.org/pdf/2309.12640) shows, when there is no trading fee, a polynomial time algorithm for a proposer to compute an optimal strategy is given. However, when trading fees aren't zero, it is NP-hard to find an optimal strategy.
 
 3. Multi-block MEV remains a concern. A proposer controlling consecutive blocks could potentially manipulate prices across block boundaries. Nevertheless, the cost and complexity of such attacks could be increased by:
     - Updating the initial price less frequently.
@@ -144,7 +151,7 @@ enum SwapType {
 struct SequencingRuleInfo {
     uint256 blockNumber; // The block number the last time `swap` was called
     uint112 reserve0Start; // The initial reserves of token 0 at the beginning of `blockNumber`
-    bool emptyBuysOrSells; // A flag indicating wheter the ordering implies empy buys or sells.
+    bool emptyBuysOrSells; // A flag indicating whether the ordering implies empy buys or sells.
     SwapType tailSwapType; // The type of swaps making up the tail, if `emptyBuysOrSells` is true
 }
 ```
