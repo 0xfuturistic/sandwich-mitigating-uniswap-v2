@@ -211,26 +211,32 @@ contract UniswapV2Pair is UniswapV2ERC20 {
         ////////////////////////////////////////////////////////////////////////////////////////////////
 
         if (block.number > sequencingRuleInfo.blockNumber) {
-            // We have a new block, so we must reset the sequencing rule info
+            // We have a new block, so we must reset the sequencing rule info.
+            // This includes the initial token reserves used in the GSR.
             sequencingRuleInfo.blockNumber = block.number;
             sequencingRuleInfo.reserve0Start = _reserve0;
             sequencingRuleInfo.emptyBuysOrSells = false;
         } else {
-            // Get the swap type
+            // Determine if this is a buy or sell swap
             SwapType swapType = amount0Out > 0 ? SwapType.BUY : SwapType.SELL;
 
             if (sequencingRuleInfo.emptyBuysOrSells) {
-                // If we have run out of buys or sells, the swap type must be the same as for the tail swap
+                // We've entered the "tail" of the ordering.
+                // In the tail, all remaining swaps must be of the same type.
+                // This occurs when we've run out of either buy or sell orders.
+                // The tailSwapType represents the type of swaps in the tail.
                 require(swapType == sequencingRuleInfo.tailSwapType, "UniswapV2: Swap violates GSR");
             } else {
-                // Find the required swap type so we can validate against it
+                // Determine the required swap type based on current reserves
+                // This implements the core logic of the Greedy Sequencing Rule
                 SwapType requiredSwapType = _reserve0 >= sequencingRuleInfo.reserve0Start ? SwapType.SELL : SwapType.BUY;
 
                 if (swapType != requiredSwapType) {
-                    // We must have run out of buys or sells
+                    // If the swap type doesn't match the required type, we've run out of one type of order
+                    // This means we're entering the tail of the ordering
                     sequencingRuleInfo.emptyBuysOrSells = true;
-
-                    // Set the tail swap type
+                    // The tail swap type is set to the current swap type
+                    // All subsequent swaps must be of this type
                     sequencingRuleInfo.tailSwapType = swapType;
                 }
             }
