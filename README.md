@@ -29,7 +29,7 @@ For any user transaction $A$ included in a block, the GSR ensures one of the fol
 
 ## Implementation
 
-Our implementation modifies Uniswap V2 to enforce the GSR at the smart contract level. Unlike the original paper's verifier ([Algorithm 4](#algorithm-4-gsr-verifier)), which checks the entire order of transactions from the beginning of the block every time, our approach verifies new transactions in real-time. This results in a constant-time verification algorithm for new transactions, improving efficiency over the linear-time algorithm in the original paper.
+This implementation modifies Uniswap V2 to enforce the GSR at the smart contract level. Unlike the original paper's verifier ([Algorithm 4](#algorithm-4-gsr-verifier)), which checks the entire order of transactions from the beginning of the block every time, this approach verifies new transactions in real-time. This results in a constant-time verification algorithm for new transactions, improving efficiency over the linear-time algorithm in the original paper.
 
 The key changes are in the swap function, adding to it only 16 lines of code (uncommented). [`SwapType`](#swaptype-enum) and [`SequencingRuleInfo`](#sequencingruleinfo-struct) are defined in the [Appendix](#appendix).
 
