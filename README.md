@@ -8,13 +8,16 @@ Uniswap V2 is minimally modified to implement the Greedy Sequencing Rule (GSR), 
 
 ## The Greedy Sequencing Rule (GSR)
 
-The GSR provides strong execution guarantees for users. It leverages a key property of two-token liquidity pools: the Duality Theorem ([Theorem 5.1](#theorem-51-duality-theorem)), which states that at any given state, either all buy orders or all sell orders will receive a better execution price than at the initial state.
+The GSR provides strong execution guarantees for users. It leverages a key property of two-token liquidity pools: the Duality Theorem,
 
-For any user transaction $A$ included in a block, the GSR ensures one of the following ([Theorem 5.2](#theorem-52-greedy-sequencing-rule-gsr)):
+> **Theorem 5.1** (Duality Theorem)**.** For any pair of states $X, X'$ in a liquidity pool exchange with potential $\phi$, either: <br>- All buy orders receive better execution at $X$ than $X'$, or <br>- All sell orders receive better execution at $X$ than $X'$. 
 
-1. The user can efficiently detect if the proposer didn't respect the rule.
-2. The execution price of $A$ for the user is at least as good as if $A$ was the only transaction in the block.
-3. The execution price of $A$ is worse than this standalone price but the proposer does not gain when including $A$ in the block.
+For any user transaction $A$ included in a block, the GSR ensures one of the following:
+
+> **Theorem 5.2** Greedy Sequencing Rule (GSR)**.** We specify a sequencing rule (the Greedy Sequencing Rule) such that, for any valid execution ordering, then for any user transaction $A$ that the proposer includes in the block, it must be one of the following: <br>1. The user efficiently detects the proposer did not respect the sequencing rule. <br>2. The execution price of $A$ is at least as good as if $A$ was the only transaction in the block. <br>3. The execution price of $A$ is worse but the proposer does not gain when including $A$ in the block.
+
+These propoerties ensure that the GSR's guarantees are maintained throughout the entire block, even when dealing with an uneven distribution of buy and sell orders.
+
 
 ### GSR Algorithm
 
@@ -29,9 +32,9 @@ For any user transaction $A$ included in a block, the GSR ensures one of the fol
 
 ## Implementation
 
-This implementation modifies Uniswap V2 to enforce the GSR at the smart contract level. Unlike the original paper's verifier ([Algorithm 4](#algorithm-4-gsr-verifier)), which checks the entire order of transactions from the beginning of the block every time, this approach verifies new transactions in real-time. This results in a constant-time verification algorithm for new transactions, improving efficiency over the linear-time algorithm in the original paper.
+This implementation modifies Uniswap V2 to enforce the GSR at the smart contract level. Unlike the [original paper's verifier](#original-gsr-verifier), which checks the entire order of transactions from the beginning of the block every time, this approach verifies new transactions in real-time. This results in a constant-time verification algorithm for new transactions, improving efficiency over the linear-time algorithm in the original paper.
 
-The key changes are in the swap function, adding to it only 16 lines of code (uncommented). [`SwapType`](#swaptype-enum) and [`SequencingRuleInfo`](#sequencingruleinfo-struct) are defined in the [Appendix](#appendix).
+The key changes are in `UniswapV2Pair`'s swap function, adding to it only 16 lines of code (uncommented). [`SwapType`](#swaptype-enum) and [`SequencingRuleInfo`](#sequencingruleinfo-struct) are defined in the [Appendix](#appendix). If a swap violates the GSR, the transaction reverts.
 
 ```solidity
 SequencingRuleInfo public sequencingRuleInfo;
@@ -88,8 +91,14 @@ This implementation ensures that the GSR's guarantees are maintained throughout 
 
 ## Limitations and Future Work
 
-1. While the GSR prevents classic sandwich attacks, it doesn't eliminate all forms of MEV. The paper proves that for any sequencing rule, there exist scenarios where proposers can still obtain risk-free profits ([Theorem 4.2](#theorem-42-existence-of-risk-free-profits)).
-2. The proposer needs to follow a specific algorithm to ensure the order of swaps in the block satisfies the GSR ([Algorithm 3](#algorithm-3-gsr)). [Algorithm 3](#algorithm-3-gsr) takes a set of transactions $B$ and an initial state $X_0$ (denoting the state before a transaction in this block executes on the chain), and recursively constructs an execution ordering $(T_1 , … , T_{|B|})$ (a permutation of the transactions in $B$).
+1. While the GSR prevents classic sandwich attacks, it doesn't eliminate all forms of MEV. The paper proves that for any sequencing rule, there exist scenarios where proposers can still obtain risk-free profits:
+
+> **Theorem 4.2** (Existence of Risk-Free Profits)**.** For a class of liquidity pool exchanges (that includes Uniswap), for any sequencing rule, there are instances where the proposer has a profitable risk-free undetectable deviation.
+
+
+2. The proposer needs to follow the [GSR algorithm](#gsr-algorithm), taking as set of transactions the swaps in the same block for a `UniswapV2Pair` instance. Concretely, they'd take a set of swaps $B$ and an initial state $X_0$ (denoting the state before a swap in this block executes on the chain), and recursively construct an execution ordering $(T_1 , … , T_{|B|})$ (a permutation of the swaps in $B$). 
+As the paper [_MEV Makes Everyone Happy under Greedy Sequencing Rule_](https://arxiv.org/pdf/2309.12640) shows, for the scenario where there is no trading fee, a polynomial time algorithm for a proposer to compute an optimal strategy is given; In contrast, when the fraction of trading fees is any constant larger than 0 (e.g., f = 0.3% in most Uniswap pools), it is NP-hard to find an optimal strategy.
+
 3. Multi-block MEV remains a concern. A proposer controlling consecutive blocks could potentially manipulate prices across block boundaries. Nevertheless, the cost and complexity of such attacks could be increased by:
     - Updating the initial price less frequently.
     - Using a moving average over several past blocks.
@@ -98,44 +107,7 @@ This implementation ensures that the GSR's guarantees are maintained throughout 
 
 # Appendix
 
-These were obtained (and slightly modified) from the original paper, which also contains the proofs.
-
-### Theorem 4.2: Existence of Risk-Free Profits
-
-For a class of liquidity pool exchanges (that includes Uniswap), for any sequencing rule, there are instances where the proposer has a profitable risk-free undetectable deviation.
-
-### Theorem 5.1: Duality Theorem
-Consider any liquidity pool exchange with potential $\phi$. For any pair of states $X, X' ∈ L_{c}(\phi)$, it must be that either:
-- any buy order receives a better execution at $X$ than $X'$, or
-- any sell order receives a better execution at $X$ than $X'$.
-
-where $L_{c}(\phi)$ is the collection of reachable states with the potential $\phi$.
-
-### Theorem 5.2: Greedy Sequencing Rule (GSR)
-
-We specify a sequencing rule (the Greedy Sequencing Rule) such that, for any valid execution ordering, then for any user transaction $A$ that the proposer includes in the block, it must be one of the following:
-1. The user efficiently detects the proposer did not respect the sequencing rule.
-2. The execution price of $A$ for the user is at least as good as if $A$ was the only transaction in the block.
-3. The execution price of $A$ is worse than this standalone price but the proposer does not gain when including $A$ in the block.
-
-### Algorithm 3: GSR
-
-The GSR is specified as follows, which outputs an execution ordering $T$ that satisfies the GSR:
-
-1. Initialize $T$ as an empty list.
-2. Let $B^{buy} ⊆ B$ be the collection of buy orders in $B$. Let $B^{sell} ⊆ B$ be the collection of sell orders in $B$.
-3. While $B^{buy}$ and $B^{sell}$ are both non-empty:
-    1. Let $t=|T|$.
-    2. If $X_{t,1} \ge X_{0,1}$:
-        1. Let $A$ be any order in $B^{buy}$.
-        2. Append $A$ to $T$ and remove it from $B^{buy}$.
-    3. Else:
-        1. Let $A$ be any order in $B^{sell}$.
-        2. Append $A$ to $T$ and remove it from $B^{sell}$.
-    4. Let $X_{t+1}$ be the state after $A$ executes on $X_{t}$.
-4. If $B^{buy} ∪ B^{sell}$ is non-empty, append all remaining transactions in $B^{buy} ∪ B^{sell}$ to $T$ in any order.
-
-### Algorithm 4: GSR Verifier
+### Original GSR Verifier
 
 It outputs $True$ or $False$, and proceeds as follows:
 
