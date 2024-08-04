@@ -89,9 +89,8 @@ This implementation ensures that the GSR's guarantees are maintained throughout 
 ## Limitations and Future Work
 
 1. While the GSR prevents classic sandwich attacks, it doesn't eliminate all forms of MEV. The paper proves that for any sequencing rule, there exist scenarios where proposers can still obtain risk-free profits ([Theorem 4.2](#theorem-42-existence-of-risk-free-profits)).
-2. Multi-block MEV remains a concern. A proposer controlling consecutive blocks could potentially manipulate prices across block boundaries.
-These approaches could increase the cost and complexity of such attacks:
-    - Updating the initial price less frequently
+2. Multi-block MEV remains a concern. A proposer controlling consecutive blocks could potentially manipulate prices across block boundaries. Nevertheless, the cost and complexity of such attacks could be increased by:
+    - Updating the initial price less frequently.
     - Using a moving average over several past blocks.
 3. The current implementation is designed for two-token pools. Extending these guarantees to pools with three or more tokens remains an open question.
 4. Further research is needed to characterize optimal sequencing rules that maximize user welfare under strategic proposer behavior.
@@ -99,7 +98,7 @@ These approaches could increase the cost and complexity of such attacks:
 
 # Appendix
 
-These were obtained from the original paper, which also contains proofs.
+These were obtained (and slightly modified) from the original paper, which also contains the proofs.
 
 ### Theorem 4.2: Existence of Risk-Free Profits
 
