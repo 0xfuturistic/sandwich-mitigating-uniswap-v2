@@ -26,7 +26,7 @@ From a practical standpoint, the proposer can't gain when including $A$ in the b
 
 ### GSR Algorithm
 
-To "produce" a valid execution ordering, the GSR uses a recursive algorithm that takes as input the set of swaps in the same block for a `UniswapV2Pair` instance and outputs an execution ordering $(T_1 , … , T_{|B|})$ (a permutation of the swaps in $B$).
+To "produce" a valid execution ordering, the GSR uses a recursive algorithm that takes as input the set of swaps in the same block for a [`UniswapV2Pair`](src/UniswapV2Pair.sol) instance and outputs an execution ordering $(T_1 , … , T_{|B|})$ (a permutation of the swaps in $B$).
 
 The algorithm is as follows:
 
@@ -43,7 +43,7 @@ The algorithm is as follows:
 
 This implementation modifies Uniswap V2 to enforce the GSR at the smart contract level. Unlike the [original paper's verifier](#original-gsr-verifier), which checks the entire order of transactions from the beginning of the block every time, this approach verifies new transactions in real time. This results in a constant-time verification algorithm for new transactions, improving efficiency over the linear-time algorithm in the original paper.
 
-The key changes are in `UniswapV2Pair`'s swap function, adding to it only 16 lines of code (uncommented). [`SwapType`](#swaptype-enum) and [`SequencingRuleInfo`](#sequencingruleinfo-struct) are defined in the [Appendix](#appendix). If a swap violates the GSR, the transaction reverts.
+The key changes are in [`UniswapV2Pair`](src/UniswapV2Pair.sol)'s swap function, adding to it only 16 lines of code (uncommented). [`SwapType`](#swaptype-enum) and [`SequencingRuleInfo`](#sequencingruleinfo-struct) are defined in the [Appendix](#appendix). If a swap violates the GSR, the transaction reverts.
 
 ```solidity
 SequencingRuleInfo public sequencingRuleInfo;
@@ -91,7 +91,7 @@ This implementation ensures that the GSR's guarantees are maintained throughout 
 
 ## How does it prevent sandwich attacks?
 
-Consider the following example, where $T$ is an execution ordering over swaps in the same block for a `UniswapV2Pair` instance:
+Consider the following example, where $T$ is an execution ordering over swaps in the same block for a [`UniswapV2Pair`](src/UniswapV2Pair.sol) instance:
 1. The proposer exexcutes the swap for the first side of the sandwich attack (a buy order) as $T_1$.
 2. Then, it executes the user's swap (a buy order) as $T_2$.
     - The GSR recognizes that the swap type that would have received a better execution price at $X$ than $X'$ was a sell order instead of another buy order.
@@ -114,7 +114,7 @@ Consider the following example, where $T$ is an execution ordering over swaps in
 > **Theorem 4.2** (Existence of Risk-Free Profits)**.** For a class of liquidity pool exchanges (that includes Uniswap), for any sequencing rule, there are instances where the proposer has a profitable risk-free undetectable deviation.
 
 
-2. The proposer needs to follow the [GSR algorithm](#gsr-algorithm), taking as set of transactions the swaps in the same block for a `UniswapV2Pair` instance. Concretely, they'd take a set of swaps $B$ and an initial state $X_0$ (denoting the state before a swap in this block executes on the chain), and recursively construct an execution ordering $(T_1 , … , T_{|B|})$ (a permutation of the swaps in $B$). 
+2. The proposer needs to follow the [GSR algorithm](#gsr-algorithm), taking as set of transactions the swaps in the same block for a [`UniswapV2Pair`](src/UniswapV2Pair.sol) instance. Concretely, they'd take a set of swaps $B$ and an initial state $X_0$ (denoting the state before a swap in this block executes on the chain), and recursively construct an execution ordering $(T_1 , … , T_{|B|})$ (a permutation of the swaps in $B$). 
 As the paper [_MEV Makes Everyone Happy under Greedy Sequencing Rule_](https://arxiv.org/pdf/2309.12640) shows, when there is no trading fee, a polynomial time algorithm for a proposer to compute an optimal strategy is given. However, when trading fees aren't zero, it is NP-hard to find an optimal strategy.
 
 3. Multi-block MEV remains a concern. A proposer controlling consecutive blocks could potentially manipulate prices across block boundaries. Nevertheless, the cost and complexity of such attacks could be increased by:
