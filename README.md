@@ -93,9 +93,8 @@ This implementation ensures that the GSR's guarantees are maintained throughout 
 3. Multi-block MEV remains a concern. A proposer controlling consecutive blocks could potentially manipulate prices across block boundaries. Nevertheless, the cost and complexity of such attacks could be increased by:
     - Updating the initial price less frequently.
     - Using a moving average over several past blocks.
-4. The current implementation is designed for two-token pools. Extending these guarantees to pools with three or more tokens remains an open question.
-5. Further research is needed to characterize optimal sequencing rules that maximize user welfare under strategic proposer behavior.
-6. Exploring randomized sequencing rules as a potential avenue for eliminating risk-free profits for proposers.
+4. Further research is needed to characterize optimal sequencing rules that maximize user welfare under strategic proposer behavior.
+5. Exploring randomized sequencing rules as a potential avenue for eliminating (or at least reducing) risk-free profits for proposers.
 
 # Appendix
 
