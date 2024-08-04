@@ -1,6 +1,6 @@
 # 🥪🦄 Sandwich-Resistant Uniswap V2
 
-<img src="unicorn.png" width="47%">
+<img src="unicorn.png" width="46%">
 
 > **Background:** Matheus V. X. Ferreira and David C. Parkes. _Credible Decentralized Exchange Design via Verifiable Sequencing Rules._ URL: https://arxiv.org/pdf/2209.15569.
 
