@@ -41,7 +41,7 @@ The algorithm is as follows:
 
 ## Implementation
 
-This implementation modifies Uniswap V2 to enforce the GSR at the smart contract level. Unlike the [original paper's verifier](#ferreira--parkes-2023-gsr-verifier), which checks the entire order of transactions from the beginning of the block every time, this approach verifies new transactions in real time. This results in a constant-time verification algorithm for new transactions, improving efficiency over the linear-time algorithm in the original paper.
+This implementation modifies Uniswap V2 to enforce the GSR at the smart contract level. Unlike the [original GSR Verifier Algorithm](#ferreira--parkes-2023-gsr-verifier-algorithm), which iterates through the entire execution ordering per check, our algorithm assumes that the execution ordering before adding a swap is valid, and then just validates the new swap. This single-swap verification is constant-time, and leads to a more efficient , use-case-specific verification algorithm than the linear-time algorithm in the original paper.
 
 The key changes are in [`UniswapV2Pair`](src/UniswapV2Pair.sol)'s swap function, adding to it only 16 lines of code (uncommented). [`SwapType`](#swaptype-enum) and [`SequencingRuleInfo`](#sequencingruleinfo-struct) are defined in the [Appendix](#appendix). If a swap violates the GSR, the transaction reverts.
 
@@ -124,7 +124,7 @@ As the paper [_MEV Makes Everyone Happy under Greedy Sequencing Rule_](https://a
 
 # Appendix
 
-### Ferreira & Parkes (2023) GSR Verifier
+### Ferreira & Parkes (2023) GSR Verifier Algorithm
 
 It outputs $True$ or $False$, and proceeds as follows:
 
