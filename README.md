@@ -89,12 +89,13 @@ This implementation ensures that the GSR's guarantees are maintained throughout 
 ## Limitations and Future Work
 
 1. While the GSR prevents classic sandwich attacks, it doesn't eliminate all forms of MEV. The paper proves that for any sequencing rule, there exist scenarios where proposers can still obtain risk-free profits ([Theorem 4.2](#theorem-42-existence-of-risk-free-profits)).
-2. Multi-block MEV remains a concern. A proposer controlling consecutive blocks could potentially manipulate prices across block boundaries. Nevertheless, the cost and complexity of such attacks could be increased by:
+2. The proposer needs to follow a specific algorithm to ensure the order of swaps in the block satisfies the GSR ([Algorithm 3](#algorithm-3-gsr)). [Algorithm 3](#algorithm-3-gsr) takes a set of transactions $B$ and an initial state $X_0$ (denoting the state before a transaction in this block executes on the chain), and recursively constructs an execution ordering $(T_1 , … , T_{|B|})$ (a permutation of the transactions in $B$).
+3. Multi-block MEV remains a concern. A proposer controlling consecutive blocks could potentially manipulate prices across block boundaries. Nevertheless, the cost and complexity of such attacks could be increased by:
     - Updating the initial price less frequently.
     - Using a moving average over several past blocks.
-3. The current implementation is designed for two-token pools. Extending these guarantees to pools with three or more tokens remains an open question.
-4. Further research is needed to characterize optimal sequencing rules that maximize user welfare under strategic proposer behavior.
-5. Exploring randomized sequencing rules as a potential avenue for eliminating risk-free profits for proposers.
+4. The current implementation is designed for two-token pools. Extending these guarantees to pools with three or more tokens remains an open question.
+5. Further research is needed to characterize optimal sequencing rules that maximize user welfare under strategic proposer behavior.
+6. Exploring randomized sequencing rules as a potential avenue for eliminating risk-free profits for proposers.
 
 # Appendix
 
@@ -117,6 +118,23 @@ We specify a sequencing rule (the Greedy Sequencing Rule) such that, for any val
 1. The user efficiently detects the proposer did not respect the sequencing rule.
 2. The execution price of $A$ for the user is at least as good as if $A$ was the only transaction in the block.
 3. The execution price of $A$ is worse than this standalone price but the proposer does not gain when including $A$ in the block.
+
+### Algorithm 3: GSR
+
+The GSR is specified as follows, which outputs an execution ordering $T$ that satisfies the GSR:
+
+1. Initialize $T$ as an empty list.
+2. Let $B^{buy} ⊆ B$ be the collection of buy orders in $B$. Let $B^{sell} ⊆ B$ be the collection of sell orders in $B$.
+3. While $B^{buy}$ and $B^{sell}$ are both non-empty:
+    1. Let $t=|T|$.
+    2. If $X_{t,1} \ge X_{0,1}$:
+        1. Let $A$ be any order in $B^{buy}$.
+        2. Append $A$ to $T$ and remove it from $B^{buy}$.
+    3. Else:
+        1. Let $A$ be any order in $B^{sell}$.
+        2. Append $A$ to $T$ and remove it from $B^{sell}$.
+    4. Let $X_{t+1}$ be the state after $A$ executes on $X_{t}$.
+4. If $B^{buy} ∪ B^{sell}$ is non-empty, append all remaining transactions in $B^{buy} ∪ B^{sell}$ to $T$ in any order.
 
 ### Algorithm 4: GSR Verifier
 
