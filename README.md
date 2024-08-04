@@ -26,7 +26,7 @@ From a practical standpoint, the proposer can't gain when including $A$ in the b
 
 ### GSR Algorithm
 
-To "produce" a valid execution ordering, the GSR relies on a recursive algorithm that takes as input the set of swaps in the same block for a [`UniswapV2Pair`](src/UniswapV2Pair.sol) instance and outputs an execution ordering $(T_1 , … , T_{|B|})$ (a permutation of the swaps in $B$).
+To "produce" a valid execution ordering, the GSR relies on a recursive algorithm that takes as input a set of transactions in $B$ and one of the initial reserves of token 0 and token 1 for a [`UniswapV2Pair`](src/UniswapV2Pair.sol) instance and outputs an execution ordering $(T_1 , … , T_{|B|})$ (a permutation of the swaps in $B$).
 
 The algorithm is as follows:
 
@@ -41,7 +41,7 @@ The algorithm is as follows:
 
 ## Implementation
 
-This implementation modifies Uniswap V2 to enforce the GSR at the smart contract level. Unlike the [original paper's verifier](#original-gsr-verifier), which checks the entire order of transactions from the beginning of the block every time, this approach verifies new transactions in real time. This results in a constant-time verification algorithm for new transactions, improving efficiency over the linear-time algorithm in the original paper.
+This implementation modifies Uniswap V2 to enforce the GSR at the smart contract level. Unlike the [original paper's verifier](#ferreira--parkes-2023-gsr-verifier), which checks the entire order of transactions from the beginning of the block every time, this approach verifies new transactions in real time. This results in a constant-time verification algorithm for new transactions, improving efficiency over the linear-time algorithm in the original paper.
 
 The key changes are in [`UniswapV2Pair`](src/UniswapV2Pair.sol)'s swap function, adding to it only 16 lines of code (uncommented). [`SwapType`](#swaptype-enum) and [`SequencingRuleInfo`](#sequencingruleinfo-struct) are defined in the [Appendix](#appendix). If a swap violates the GSR, the transaction reverts.
 
@@ -113,7 +113,6 @@ Consider the following example, where $T$ is an execution ordering over swaps in
 
 > **Theorem 4.2** (Existence of Risk-Free Profits)**.** For a class of liquidity pool exchanges (that includes Uniswap), for any sequencing rule, there are instances where the proposer has a profitable risk-free undetectable deviation.
 
-
 2. The proposer needs to follow the [GSR algorithm](#gsr-algorithm), taking as set of transactions the swaps in the same block for a [`UniswapV2Pair`](src/UniswapV2Pair.sol) instance. Concretely, they'd take a set of swaps $B$ and an initial state $X_0$ (denoting the state before a swap in this block executes on the chain), and recursively construct an execution ordering $(T_1 , … , T_{|B|})$ (a permutation of the swaps in $B$). 
 As the paper [_MEV Makes Everyone Happy under Greedy Sequencing Rule_](https://arxiv.org/pdf/2309.12640) shows, when there is no trading fee, a polynomial time algorithm for a proposer to compute an optimal strategy is given. However, when trading fees aren't zero, it is NP-hard to find an optimal strategy.
 
@@ -125,7 +124,7 @@ As the paper [_MEV Makes Everyone Happy under Greedy Sequencing Rule_](https://a
 
 # Appendix
 
-### Original GSR Verifier
+### Ferreira & Parkes (2023) GSR Verifier
 
 It outputs $True$ or $False$, and proceeds as follows:
 
