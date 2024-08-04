@@ -40,7 +40,7 @@ contract SandwichResistanceTest is Test {
 
         // sell
         token0.transfer(address(pair), 1 ether);
-        vm.expectRevert("UniswapV2: Swap violates GSR");
+        vm.expectRevert("UniswapV2: VIOLATES_GSR");
         pair.swap(0, 0.99 ether, address(this), "");
     }
 
@@ -64,7 +64,7 @@ contract SandwichResistanceTest is Test {
 
         // sell
         token0.transfer(address(pair), 1 ether);
-        vm.expectRevert("UniswapV2: Swap violates GSR");
+        vm.expectRevert("UniswapV2: VIOLATES_GSR");
         pair.swap(0, 0.99 ether, address(this), "");
     }
 
@@ -146,7 +146,7 @@ contract SandwichResistanceTest is Test {
 
         // sell in block N+1 should lead to a sandwich
         token0.transfer(address(pair), 1 ether);
-        vm.expectRevert("UniswapV2: Swap violates GSR");
+        vm.expectRevert("UniswapV2: VIOLATES_GSR");
         pair.swap(0, 0.99 ether, address(this), "");
     }
 }
