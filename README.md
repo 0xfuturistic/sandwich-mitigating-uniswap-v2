@@ -12,7 +12,7 @@ The GSR provides strong execution guarantees for users. It leverages a key prope
 
 > **Theorem 5.1** (Duality Theorem)**.** For any pair of states $X, X'$ in a liquidity pool exchange with potential $\phi$, either: <br>- Any buy orders receives a better execution at $X$ than $X'$, or <br>- Any sell orders receives a better execution at $X$ than $X'$. 
 
-This theorem forms the foundation of the GSR. The rule operates as follows:
+This theorem forms the foundation of the GSR, which operates as follows:
 
 - Execute the type of order (buy or sell) that's getting the better price.
 - Continue this process until one type of order is exhausted.
@@ -22,11 +22,11 @@ By following these rules, the GSR ensures:
 
 > **Theorem 5.2** Greedy Sequencing Rule (GSR)**.** We specify a sequencing rule (the Greedy Sequencing Rule) such that, for any valid execution ordering, then for any user transaction $A$ that the proposer includes in the block, it must be one of the following: <br>1. The user efficiently detects the proposer did not respect the sequencing rule. <br>2. The execution price of $A$ is at least as good as if $A$ was the only transaction in the block. <br>3. The execution price of $A$ is worse but the proposer does not gain when including $A$ in the block.
 
-From a practical standpoint, the proposer can't gain when including $A$ in the block if we've run out of buy or sell orders because the GSR doesn't allow them to include the final leg of the sandwich attack (a sell order) in the same block.
+From a practical standpoint, the proposer can't gain when including $A$ in the block if we've run out of buy or sell orders.
 
 ### GSR Algorithm
 
-To "produce" a valid execution ordering, the GSR uses a recursive algorithm that takes as input the set of swaps in the same block for a [`UniswapV2Pair`](src/UniswapV2Pair.sol) instance and outputs an execution ordering $(T_1 , … , T_{|B|})$ (a permutation of the swaps in $B$).
+To "produce" a valid execution ordering, the GSR relies on a recursive algorithm that takes as input the set of swaps in the same block for a [`UniswapV2Pair`](src/UniswapV2Pair.sol) instance and outputs an execution ordering $(T_1 , … , T_{|B|})$ (a permutation of the swaps in $B$).
 
 The algorithm is as follows:
 
