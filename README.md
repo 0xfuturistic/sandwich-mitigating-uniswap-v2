@@ -31,9 +31,11 @@ For any user transaction $A$ included in a block, the GSR ensures one of the fol
 
 Our implementation modifies Uniswap V2 to enforce the GSR at the smart contract level. Unlike the original paper's verifier ([Algorithm 4](#algorithm-4-gsr-verifier)), which checks the entire order of transactions from the beginning of the block every time, our approach verifies new transactions in real-time. This results in a constant-time verification algorithm for new transactions, improving efficiency over the linear-time algorithm in the original paper.
 
-The key changes are in the swap function, adding 24 lines of code:
+The key changes are in the swap function, adding to it only 16 lines of code (uncommented). [`SequencingRuleInfo`](#sequencingruleinfo-struct) and [`SwapType`](#swaptype-enum) are defined in the appendix.
 
 ```solidity
+SequencingRuleInfo public sequencingRuleInfo;
+
 function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external lock {
     // ... existing swap logic ...
 
@@ -72,6 +74,7 @@ function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data)
     // ... continue with swap execution ...
 }
 ```
+
 This implementation ensures that the GSR's guarantees are maintained throughout the entire block, even when dealing with an uneven distribution of buy and sell orders. It's computationally efficient and verifiable, allowing anyone to check if the new swap leads to a valid ordering. It does not have any external depedencies, and it does not depend on any off-chain computation, oracles, or additional infrastructure.
 
 
@@ -103,7 +106,7 @@ These were obtained from the original paper, which also contains proofs.
 For a class of liquidity pool exchanges (that includes Uniswap), for any sequencing rule, there are instances where the proposer has a profitable risk-free undetectable deviation.
 
 ### Theorem 5.1: Duality Theorem
-Consider any liquidity pool exchange with potential $\phi$. For any pair of states $X, X' ∈ L_{c}(\phi)$, it must be one of the following:
+Consider any liquidity pool exchange with potential $\phi$. For any pair of states $X, X' ∈ L_{c}(\phi)$, it must be either:
 - any buy order receives a better execution at $X$ than $X'$, or
 - any sell order receives a better execution at $X$ than $X'$.
 
@@ -118,7 +121,7 @@ We specify a sequencing rule (the Greedy Sequencing Rule) such that, for any val
 
 ### Algorithm 4: GSR Verifier
 
-It outputs $True$ or $False$, according to the following:
+It outputs $True$ or $False$, and proceeds as follows:
 
 1. For $t=1,2,\ldots,|T|$:
     1. If $T_{t}, T_{t+1} \ldots, T_{|T|}$ are orders of the same type (i.e., all are buys or all are sells orders), then output $True$.
@@ -126,3 +129,23 @@ It outputs $True$ or $False$, according to the following:
     3. If $X_{t-1,1} < X_{0,1}$ and $T_{t}$ is a sell order, then output $False$.
     4. Let $X_{t}$ be the state after $T_{t}$ executes on $X_{t-1}$.
 2. Output $True$.
+
+### `SwapType` Enum
+
+```solidity
+enum SwapType {
+    BUY, // A buy order
+    SELL // A sell order
+}
+```
+
+### `sequencingRuleInfo` Struct
+
+```solidity
+struct SequencingRuleInfo {
+    uint256 blockNumber; // The block number the last time `swap` was called
+    uint112 reserve0Start; // The initial reserves of token 0 at the beginning of `blockNumber`
+    bool emptyBuysOrSells; // A flag indicating wheter the ordering implies empy buys or sells.
+    SwapType tailSwapType; // The type of swaps making up the tail, if `emptyBuysOrSells` is true
+}
+```
