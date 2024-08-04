@@ -8,18 +8,29 @@ Uniswap V2 is minimally modified to implement the Greedy Sequencing Rule (GSR), 
 
 ## The Greedy Sequencing Rule (GSR)
 
-The GSR provides strong execution guarantees for users. It leverages a key property of two-token liquidity pools: the Duality Theorem,
+The GSR provides strong execution guarantees for users. It leverages a key property of two-token liquidity pools: the Duality Theorem.
 
 > **Theorem 5.1** (Duality Theorem)**.** For any pair of states $X, X'$ in a liquidity pool exchange with potential $\phi$, either: <br>- All buy orders receive better execution at $X$ than $X'$, or <br>- All sell orders receive better execution at $X$ than $X'$. 
 
-For any user transaction $A$ included in a block, the GSR ensures one of the following:
+This property ensures that regardless of the potential $\phi$, there will always be an order type (i.e., buy or sell) that is better executed at $X$ than $X'$. We leverage this property to ensure that for as long as there are available buy or sell orders, the order that is better executed at $X$ than $X'$ should be executed. However, if we ran out of buy or sell orders, we must violate this commitment, but we commit to only including orders of the same type (as the type not run out of out) for the remainder of the block.
+
+Formally, the GSR ensures the following:
 
 > **Theorem 5.2** Greedy Sequencing Rule (GSR)**.** We specify a sequencing rule (the Greedy Sequencing Rule) such that, for any valid execution ordering, then for any user transaction $A$ that the proposer includes in the block, it must be one of the following: <br>1. The user efficiently detects the proposer did not respect the sequencing rule. <br>2. The execution price of $A$ is at least as good as if $A$ was the only transaction in the block. <br>3. The execution price of $A$ is worse but the proposer does not gain when including $A$ in the block.
 
-These propoerties ensure that the GSR's guarantees are maintained throughout the entire block, even when dealing with an uneven distribution of buy and sell orders.
+From a practical standpoint, the proposer does not gain when including $A$ in the block if we've run out of buy or sell orders.
+
+Consider the following example:
+1. The proposer includes the swap for the first side of the sandwich attack (a buy order).
+2. Then, it includes the user's swap (a buy order).
+    - The GSR recognizes that the user's swap contradicts the GSR, because the swap order that would have received a better execution price at $X$ than $X'$ was a sell order instead of another buy order. Therefore, the algorithm "deduces" that the proposer must have run out of sell orders, so it commits the proposer to only include buy orders for the remainder of the block after that swap (the tail).
+3. The proposer tries to include the swap for the second side of the sandwich attack (a sell order), but it fails.
+    - The swap type (sell) would be blocked by the GSR, because the GSR requires that the swap type be the same for the remainder of the block (i.e., for the tail). This would break the commitment the proposer made to only include buy orders for the remainder of the block after registering as having run out of sell orders.
 
 
 ### GSR Algorithm
+
+This is the algorithm that the GSR uses to determine the execution ordering for a set of swaps $B$ for a block. It is a recursive algorithm that takes as input the set of swaps in the same block for a `UniswapV2Pair` instance, and outputs an execution ordering $(T_1 , … , T_{|B|})$ (a permutation of the swaps in $B$).
 
 1. Initialize an empty execution ordering $T$.
 2. Partition outstanding transactions into buy orders ($B_{buy}$) and sell orders ($B_{sell}$).
@@ -53,11 +64,11 @@ function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data)
         SwapType swapType = amount0Out > 0 ? SwapType.BUY : SwapType.SELL;
 
         if (sequencingRuleInfo.emptyBuysOrSells) {
-            // We've entered the "tail" of the ordering. 
-            // In the tail, all remaining swaps must be of the same type.
+            // We've entered the "tail" of the ordering (Definition 5.2).
+            // In the tail, all remaining swaps must be of the same type (Lemma 5.1).
             // This occurs when we've run out of either buy or sell orders.
             // The tailSwapType represents the type of swaps in the tail.
-            require(swapType == sequencingRuleInfo.tailSwapType, "UniswapV2: Swap violates GSR");
+            require(swapType == sequencingRuleInfo.tailSwapType, "UniswapV2: VIOLATES_GSR");
         } else {
             // Determine the required swap type based on current reserves
             // This implements the core logic of the Greedy Sequencing Rule

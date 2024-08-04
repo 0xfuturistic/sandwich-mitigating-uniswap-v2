@@ -221,11 +221,11 @@ contract UniswapV2Pair is UniswapV2ERC20 {
             SwapType swapType = amount0Out > 0 ? SwapType.BUY : SwapType.SELL;
 
             if (sequencingRuleInfo.emptyBuysOrSells) {
-                // We've entered the "tail" of the ordering.
-                // In the tail, all remaining swaps must be of the same type.
+                // We've entered the "tail" of the ordering (Definition 5.2).
+                // In the tail, all remaining swaps must be of the same type (Lemma 5.1).
                 // This occurs when we've run out of either buy or sell orders.
                 // The tailSwapType represents the type of swaps in the tail.
-                require(swapType == sequencingRuleInfo.tailSwapType, "UniswapV2: Swap violates GSR");
+                require(swapType == sequencingRuleInfo.tailSwapType, "UniswapV2: VIOLATES_GSR");
             } else {
                 // Determine the required swap type based on current reserves
                 // This implements the core logic of the Greedy Sequencing Rule
