@@ -94,8 +94,8 @@ This implementation ensures that the GSR's guarantees are maintained throughout 
 Consider the following example, where $T$ is an execution ordering over swaps in the same block for a [`UniswapV2Pair`](src/UniswapV2Pair.sol) instance:
 1. The proposer exexcutes the swap for the first side of the sandwich attack (a buy order) as $T_1$.
 2. Then, it executes the user's swap (a buy order) as $T_2$.
-    - The GSR recognizes that the swap type that would have received a better execution price at $X$ than $X'$ was a sell order instead of another buy order.
-    - Therefore, the GSR assumes that the proposer must have run out of sell orders, so it binds the proposer to only include buy orders for the remainder of the block, the tail, starting from $T_2$.
+    - The algorithm recognizes that the swap type that would have received a better execution price at $X$ than $X'$ was a sell order instead of another buy order.
+    - Therefore, the algorithm assumes that the proposer must have run out of sell orders, so it binds the proposer to only include buy orders for the remainder of the block, the tail, starting from $T_2$.
 3. The proposer tries to execute the swap for the final side of the sandwich attack (a sell order) as $T_3$ but fails.
     - The order type (sell) would be blocked by the GSR because the GSR requires that the swap type be buy for orders in the tail, which is where $T_3$ belongs to as it follows $T_2$.
 
