@@ -26,7 +26,7 @@ From a practical standpoint, the proposer can't gain when including $A$ in the b
 
 ### GSR Algorithm
 
-To "produce" a valid execution ordering, the GSR relies on a recursive algorithm that takes as input a set of transactions in $B$ and one of the initial reserves of token 0 and token 1 for a [`UniswapV2Pair`](src/UniswapV2Pair.sol) instance and outputs an execution ordering $(T_1 , … , T_{|B|})$ (a permutation of the swaps in $B$).
+To "produce" a valid execution ordering, the GSR relies on a recursive algorithm that takes as input a set of transactions in $B$ and one of the initial reserves of token 0 and token 1 for a [`UniswapV2Pair`](src/UniswapV2Pair.sol) instance and outputs an execution ordering $(T_1 , … , T_{|B|})$ (a permutation of transactions in $B$).
 
 The algorithm is as follows:
 
@@ -41,7 +41,7 @@ The algorithm is as follows:
 
 ## Implementation
 
-This implementation modifies Uniswap V2 to enforce the GSR at the smart contract level. Unlike the [original GSR Verifier Algorithm](#ferreira--parkes-2023-gsr-verifier-algorithm), which iterates through the entire execution ordering per check, our algorithm assumes that the execution ordering before adding a swap is valid, and then just validates the new swap. This single-swap verification is constant-time, and leads to a more efficient , use-case-specific verification algorithm than the linear-time algorithm in the original paper.
+This implementation modifies Uniswap V2's smart contracts to enforce the GSR rule on swaps. Unlike the [verifier algorithm in the paper](#ferreira--parkes-2023-gsr-verifier-algorithm), which iterates through the entire execution ordering, our algorithm assumes that the execution ordering before adding a swap is valid, and then just validates the new swap in $O(1)$. This leads to an algorithm in $O(1)$, better suited for this implementation than the paper's algorithm in $O(|T|)$.
 
 The key changes are in [`UniswapV2Pair`](src/UniswapV2Pair.sol)'s swap function, adding to it only 16 lines of code (uncommented). [`SwapType`](#swaptype-enum) and [`SequencingRuleInfo`](#sequencingruleinfo-struct) are defined in the [Appendix](#appendix). If a swap violates the GSR, the transaction reverts.
 
@@ -128,8 +128,8 @@ As the paper [_MEV Makes Everyone Happy under Greedy Sequencing Rule_](https://a
 
 It outputs $True$ or $False$, and proceeds as follows:
 
-1. For $t=1,2,\ldots,|T|$:
-    1. If $T_{t}, T_{t+1} \ldots, T_{|T|}$ are orders of the same type (i.e., all are buys or all are sells orders), then output $True$.
+1. For $t=1,2,…,|T|$:
+    1. If $T_{t}, T_{t+1} …, T_{|T|}$ are orders of the same type (i.e., all are buys or all are sells orders), then output $True$.
     2. If $X_{t-1,1} \ge X_{0,1}$ and $T_{t}$ is a buy order, then output $False$.
     3. If $X_{t-1,1} < X_{0,1}$ and $T_{t}$ is a sell order, then output $False$.
     4. Let $X_{t}$ be the state after $T_{t}$ executes on $X_{t-1}$.
