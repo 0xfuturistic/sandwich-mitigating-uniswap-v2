@@ -111,7 +111,7 @@ Consider the following example, where $T$ is an execution ordering over swaps in
 
 1. While the GSR prevents classic sandwich attacks, it doesn't eliminate all forms of MEV. The paper proves that for any sequencing rule, there exist scenarios where proposers can still obtain risk-free profits:
 
-> **Theorem 4.2** (Existence of Risk-Free Profits)**.** For a class of liquidity pool exchanges (that includes Uniswap), for any sequencing rule, there are instances where the proposer has a profitable risk-free undetectable deviation.
+> **Theorem 4.2.** For a class of liquidity pool exchanges (that includes Uniswap), for any sequencing rule, there are instances where the proposer has a profitable risk-free undetectable deviation.
 
 2. The proposer needs to follow the [GSR algorithm](#gsr-algorithm), taking as set of transactions the swaps in the same block for a [`UniswapV2Pair`](src/UniswapV2Pair.sol) instance. Concretely, they'd take a set of swaps $B$ and an initial state $X_0$ (denoting the state before a swap in this block executes on the chain), and recursively construct an execution ordering $(T_1 , … , T_{|B|})$ (a permutation of the swaps in $B$). 
 As the paper [_MEV Makes Everyone Happy under Greedy Sequencing Rule_](https://arxiv.org/pdf/2309.12640) shows, when there is no trading fee, a polynomial time algorithm for a proposer to compute an optimal strategy is given. However, when trading fees aren't zero, it is NP-hard to find an optimal strategy.
