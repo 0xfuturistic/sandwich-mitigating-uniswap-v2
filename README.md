@@ -41,7 +41,7 @@ The algorithm is as follows:
 
 ## Implementation
 
-This implementation modifies Uniswap V2's smart contracts to enforce the GSR rule on swaps. Unlike the [verifier algorithm in the paper](#ferreira--parkes-2023-gsr-verifier-algorithm), which iterates through the entire execution ordering, our algorithm assumes that the execution ordering before adding a swap is valid, and then just validates the new swap in $O(1)$. This leads to an algorithm in $O(1)$, better suited for this implementation than the paper's algorithm in $O(|T|)$.
+This implementation modifies Uniswap V2's smart contracts to enforce the GSR rule on swaps. Unlike the [verifier algorithm in the paper](#ferreira--parkes-2023-gsr-verifier-algorithm), which iterates through the entire execution ordering, our algorithm assumes that the execution ordering before adding a swap is valid, and then just validates the new swap in $O(1)$. This leads to a verifier algorithm in $O(1)$, better suited for this implementation than the paper's algorithm in $O(|T|)$.
 
 The key changes are in [`UniswapV2Pair`](src/UniswapV2Pair.sol)'s swap function, adding to it only 16 lines of code (uncommented). [`SwapType`](#swaptype-enum) and [`SequencingRuleInfo`](#sequencingruleinfo-struct) are defined in the [Appendix](#appendix). If a swap violates the GSR, the transaction reverts.
 
