@@ -26,7 +26,7 @@ From a practical standpoint, the proposer can't gain when including $A$ in the b
 
 ### GSR Algorithm
 
-The GSR uses a recursive algorithm that takes as input a set of transactions $B$ and the block's initial reserves of token 1 (or 0) to produce a _valid_ execution ordering $(T_1 , … , T_{|B|})$, a permutation of transactions in $B$.
+The GSR relies on a recursive algorithm that takes as input a set of transactions $B$ and the block's initial reserves of token 1 (or 0) and produces a _valid_ execution ordering $(T_1 , … , T_{|B|})$, a permutation of transactions in $B$.
 
 The algorithm is as follows:
 
