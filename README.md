@@ -26,12 +26,12 @@ From a practical standpoint, the proposer can't gain when including $A$ in the b
 
 ### GSR Algorithm
 
-To "produce" a valid execution ordering, the GSR relies on a recursive algorithm that takes as input a set of transactions in $B$ and one of the initial reserves of token 0 and token 1 for a [`UniswapV2Pair`](src/UniswapV2Pair.sol) instance and outputs an execution ordering $(T_1 , … , T_{|B|})$ (a permutation of transactions in $B$).
+The GSR uses a recursive algorithm that takes as input a set of transactions $B$ and the block's initial reserves of token 1 (or 0) to produce a _valid_ execution ordering $(T_1 , … , T_{|B|})$, a permutation of transactions in $B$.
 
 The algorithm is as follows:
 
 1. Initialize an empty execution ordering $T$.
-2. Partition outstanding transactions into buy orders ($B_{buy}$) and sell orders ($B_{sell}$).
+2. Partition transactions in $B$ into buy orders ($B_{buy}$) and sell orders ($B_{sell}$).
 3. While both $B_{buy}$ and $B_{sell}$ are non-empty:
     - If current token 1 reserves ≥ initial token 1 reserves:
         - Append any order from $B_{buy}$ to $T$ and remove it from $B_{buy}$.
