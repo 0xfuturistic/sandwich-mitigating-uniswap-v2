@@ -18,7 +18,7 @@ This theorem forms the foundation of the GSR, which operates as follows:
 - Continue this process until one type of order is exhausted.
 - Once one type is exhausted, only allow the other type for the rest of the block.
 
-By following these rules, the GSR ensures:
+By following these rules, the GSR ensures the following:
 
 > **Theorem 5.2** Greedy Sequencing Rule (GSR)**.** We specify a sequencing rule (the Greedy Sequencing Rule) such that, for any valid execution ordering, then for any user transaction $A$ that the proposer includes in the block, it must be one of the following: <br>1. The user efficiently detects the proposer did not respect the sequencing rule. <br>2. The execution price of $A$ is at least as good as if $A$ was the only transaction in the block. <br>3. The execution price of $A$ is worse but the proposer does not gain when including $A$ in the block.
 
