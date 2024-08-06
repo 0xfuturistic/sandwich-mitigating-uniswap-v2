@@ -4,7 +4,7 @@
 
 > **Background:** Matheus V. X. Ferreira and David C. Parkes. _Credible Decentralized Exchange Design via Verifiable Sequencing Rules._ URL: https://arxiv.org/pdf/2209.15569.
 
-Uniswap V2 is minimally modified to implement the Greedy Sequencing Rule (GSR), a verifiable sequencing rule that mitigates sandwich attacks.
+Uniswap V2 is minimally modified to implement a verifiable sequencing rule that mitigates sandwich attacks, the Greedy Sequencing Rule (GSR).
 
 ## The Greedy Sequencing Rule (GSR)
 
@@ -22,7 +22,7 @@ By following these rules, the GSR ensures:
 
 > **Theorem 5.2** Greedy Sequencing Rule (GSR)**.** We specify a sequencing rule (the Greedy Sequencing Rule) such that, for any valid execution ordering, then for any user transaction $A$ that the proposer includes in the block, it must be one of the following: <br>1. The user efficiently detects the proposer did not respect the sequencing rule. <br>2. The execution price of $A$ is at least as good as if $A$ was the only transaction in the block. <br>3. The execution price of $A$ is worse but the proposer does not gain when including $A$ in the block.
 
-From a practical standpoint, the proposer can't gain when including $A$ in the block if we've run out of buy or sell orders.
+A key assumption is that proposers for contiguous blocks are _not_ controlled by the same party. Weakening this assumption shows how a sandwich attack spanning multiple blocks could be executed. Assume $B_i$ and $B_i+1$ are two contiguous blocks controlled by the same party. The proposer for $B_i$ includes the user's transaction $A$ and the sandwich's first leg (the transaction front-running the user) at the end of the block. Then, in the next block, the proposer for $B_i+1$ includes the final transaction of the sandwich attack, in the opposite direction, at the top of the block. This is would be a valid execution ordering, yet the user's transaction $A$ is successfully sandwich-attacked.
 
 ### GSR Algorithm
 
