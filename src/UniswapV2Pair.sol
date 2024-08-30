@@ -19,8 +19,7 @@ contract UniswapV2Pair is UniswapV2ERC20 {
     }
 
     struct SequencingRuleInfo {
-        uint256 blockNumber;
-        uint112 reserve0Start;
+        uint256 startPrice;
         bool emptyBuysOrSells;
         SwapType tailSwapType;
     }
@@ -42,7 +41,7 @@ contract UniswapV2Pair is UniswapV2ERC20 {
 
     uint256 private unlocked = 1;
 
-    SequencingRuleInfo public sequencingRuleInfo;
+    mapping(uint256 blockNumber => SequencingRuleInfo) public blockSequencingRuleInfo;
 
     modifier lock() {
         require(unlocked == 1, "UniswapV2: LOCKED");
@@ -210,15 +209,15 @@ contract UniswapV2Pair is UniswapV2ERC20 {
         ///                             SANDWICH ATTACK MITIGATION LOGIC                             ///
         ////////////////////////////////////////////////////////////////////////////////////////////////
 
-        if (block.number > sequencingRuleInfo.blockNumber) {
-            // We have a new block, so we must reset the sequencing rule info.
-            // This includes the initial token reserves used in the GSR.
-            sequencingRuleInfo.blockNumber = block.number;
-            sequencingRuleInfo.reserve0Start = _reserve0;
-            sequencingRuleInfo.emptyBuysOrSells = false;
+        SequencingRuleInfo storage sequencingRuleInfo = blockSequencingRuleInfo[block.number];
+
+        uint256 price = (_reserve0 * 1e6) / _reserve1;
+
+        if (sequencingRuleInfo.startPrice == 0) {
+            sequencingRuleInfo.startPrice = price;
         } else {
             // Determine if this is a buy or sell swap
-            SwapType swapType = amount0Out > 0 ? SwapType.BUY : SwapType.SELL;
+            SwapType swapType = amount0Out > 0 ? SwapType.SELL : SwapType.BUY;
 
             if (sequencingRuleInfo.emptyBuysOrSells) {
                 // We've entered the "tail" of the ordering (Definition 5.2).
@@ -226,10 +225,10 @@ contract UniswapV2Pair is UniswapV2ERC20 {
                 // This occurs when we've run out of either buy or sell orders.
                 // The tailSwapType represents the type of swaps in the tail.
                 require(swapType == sequencingRuleInfo.tailSwapType, "UniswapV2: VIOLATES_GSR");
-            } else {
+            } else if (price != sequencingRuleInfo.startPrice) {
                 // Determine the required swap type based on current reserves
                 // This implements the core logic of the Greedy Sequencing Rule
-                SwapType requiredSwapType = _reserve0 >= sequencingRuleInfo.reserve0Start ? SwapType.SELL : SwapType.BUY;
+                SwapType requiredSwapType = price > sequencingRuleInfo.startPrice ? SwapType.BUY : SwapType.SELL;
 
                 if (swapType != requiredSwapType) {
                     // If the swap type doesn't match the required type, we've run out of one type of order
