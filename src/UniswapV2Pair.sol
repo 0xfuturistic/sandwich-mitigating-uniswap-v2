@@ -26,6 +26,7 @@ contract UniswapV2Pair is UniswapV2ERC20 {
 
     uint256 public constant MINIMUM_LIQUIDITY = 10 ** 3;
     bytes4 private constant SELECTOR = bytes4(keccak256(bytes("transfer(address,uint256)")));
+    uint256 internal constant WAD = 1e18;
 
     address public factory;
     address public token0;
@@ -211,7 +212,18 @@ contract UniswapV2Pair is UniswapV2ERC20 {
 
         SequencingRuleInfo storage sequencingRuleInfo = blockSequencingRuleInfo[block.number];
 
-        uint256 price = (_reserve0 * 1e6) / _reserve1;
+        uint256 price;
+
+        // From https://github.com/Vectorized/solady/blob/main/src/utils/FixedPointMathLib.sol#L128-L138
+        /// @solidity memory-safe-assembly
+        assembly {
+            // Equivalent to `require(y != 0 && (WAD == 0 || x <= type(uint256).max / WAD))`.
+            if iszero(mul(_reserve1, iszero(mul(WAD, gt(_reserve0, div(not(0), WAD)))))) {
+                mstore(0x00, 0x7c5f487d) // `DivWadFailed()`.
+                revert(0x1c, 0x04)
+            }
+            price := div(mul(_reserve0, WAD), _reserve1)
+        }
 
         if (sequencingRuleInfo.startPrice == 0) {
             sequencingRuleInfo.startPrice = price;
