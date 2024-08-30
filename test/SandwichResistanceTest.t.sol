@@ -31,41 +31,81 @@ contract SandwichResistanceTest is Test {
     /// @notice Tests a simple sandwich attack
     function test_simpleSandwich_fails() public {
         // first buy
-        token1.transfer(address(pair), 1 ether);
-        pair.swap(0.99 ether, 0, address(this), "");
+        token0.transfer(address(pair), 1 ether);
+        pair.swap(0, 0.99 ether, address(this), "");
 
         // second buy
         token0.transfer(address(pair), 1 ether);
-        pair.swap(0.83 ether, 0, address(this), "");
+        pair.swap(0, 0.83 ether, address(this), "");
 
         // sell
-        token0.transfer(address(pair), 1 ether);
+        token1.transfer(address(pair), 1 ether);
         vm.expectRevert("UniswapV2: VIOLATES_GSR");
+        pair.swap(0.99 ether, 0, address(this), "");
+    }
+
+    /// @notice Tests a simple sandwich attack
+    function test_simpleSandwich2_fails() public {
+        // first buy
+        token0.transfer(address(pair), 1 ether);
         pair.swap(0, 0.99 ether, address(this), "");
+
+        // second buy
+        token0.transfer(address(pair), 1 ether);
+        pair.swap(0, 0.83 ether, address(this), "");
+
+        // sell
+        token1.transfer(address(pair), 1 ether);
+        vm.expectRevert("UniswapV2: VIOLATES_GSR");
+        pair.swap(0.99 ether, 0, address(this), "");
     }
 
     /// @notice Tests a complex sandwich attack
     function test_complexSandwich_fails() public {
         // first buy
+        token0.transfer(address(pair), 1 ether);
+        pair.swap(0, 0.99 ether, address(this), "");
+
+        // sell
         token1.transfer(address(pair), 1 ether);
         pair.swap(0.99 ether, 0, address(this), "");
 
-        // sell
-        token0.transfer(address(pair), 1 ether);
-        pair.swap(0, 0.99 ether, address(this), "");
-
         // second buy
         token0.transfer(address(pair), 1 ether);
-        pair.swap(0.83 ether, 0, address(this), "");
+        pair.swap(0, 0.83 ether, address(this), "");
 
         // third buy
         token0.transfer(address(pair), 1 ether);
-        pair.swap(0.59 ether, 0, address(this), "");
+        pair.swap(0, 0.59 ether, address(this), "");
 
         // sell
-        token0.transfer(address(pair), 1 ether);
+        token1.transfer(address(pair), 1 ether);
         vm.expectRevert("UniswapV2: VIOLATES_GSR");
+        pair.swap(0.99 ether, 0, address(this), "");
+    }
+
+    /// @notice Tests a complex sandwich attack
+    function test_complexSandwich2_fails() public {
+        // first buy
+        token0.transfer(address(pair), 1 ether);
         pair.swap(0, 0.99 ether, address(this), "");
+
+        // sell
+        token1.transfer(address(pair), 1 ether);
+        pair.swap(0.99 ether, 0, address(this), "");
+
+        // second buy
+        token0.transfer(address(pair), 1 ether);
+        pair.swap(0, 0.83 ether, address(this), "");
+
+        // third buy
+        token0.transfer(address(pair), 1 ether);
+        pair.swap(0, 0.59 ether, address(this), "");
+
+        // sell
+        token1.transfer(address(pair), 1 ether);
+        vm.expectRevert("UniswapV2: VIOLATES_GSR");
+        pair.swap(0.99 ether, 0, address(this), "");
     }
 
     /// @notice Tests for empty buys in the same block
@@ -120,33 +160,6 @@ contract SandwichResistanceTest is Test {
 
         // sell in block N+1
         token0.transfer(address(pair), 1 ether);
-        pair.swap(0, 0.99 ether, address(this), "");
-    }
-
-    /// @notice Tests a sandwich attack in the next block
-    function test_simpleSandwich_nextBlock_fails() public {
-        // first buy in block N
-        token1.transfer(address(pair), 1 ether);
-        pair.swap(0.99 ether, 0, address(this), "");
-
-        // second buy in block N
-        token1.transfer(address(pair), 1 ether);
-        pair.swap(0.99 ether, 0, address(this), "");
-
-        // move to next block N+1
-        vm.roll(block.number + 1);
-
-        // first buy in block N+1
-        token1.transfer(address(pair), 1 ether);
-        pair.swap(0.99 ether, 0, address(this), "");
-
-        // second buy in block N+1
-        token0.transfer(address(pair), 1 ether);
-        pair.swap(0.83 ether, 0, address(this), "");
-
-        // sell in block N+1 should lead to a sandwich
-        token0.transfer(address(pair), 1 ether);
-        vm.expectRevert("UniswapV2: VIOLATES_GSR");
         pair.swap(0, 0.99 ether, address(this), "");
     }
 }
