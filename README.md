@@ -120,7 +120,7 @@ As the paper [_MEV Makes Everyone Happy under Greedy Sequencing Rule_](https://a
     - Updating the initial price less frequently.
     - Using a moving average over several past blocks.
 4. Further research is needed to characterize optimal sequencing rules that maximize user welfare under strategic proposer behavior.
-5. Exploring randomized sequencing rules as a potential avenue for eliminating (or at least reducing) risk-free profits for proposers.
+5. The GSR has price discovery issues (i.e., when there are three different pools for the same asset).
 
 # Appendix
 
