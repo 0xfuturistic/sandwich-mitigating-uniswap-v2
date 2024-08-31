@@ -20,7 +20,6 @@ contract UniswapV2Pair is UniswapV2ERC20 {
 
     uint256 public constant MINIMUM_LIQUIDITY = 10 ** 3;
     bytes4 private constant SELECTOR = bytes4(keccak256(bytes("transfer(address,uint256)")));
-    uint112 internal constant WAD = 1e18;
 
     address public factory;
     address public token0;
