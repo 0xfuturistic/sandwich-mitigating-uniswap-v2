@@ -215,6 +215,10 @@ contract UniswapV2Pair is UniswapV2ERC20 {
         // compute the current price with 1e6 decimals (1e18 can easily overflow)
         uint112 price = (_reserve1 * 1e6) / _reserve0;
 
+        // NOTE: if we used reserve1 values instead prices, as in the paper, minting LP
+        // positions could make the algorithm unreliable. the price, however, incorporates
+        // information about reserve2 in the calculation (since price = reserve1 / reserve2).
+
         // check if the sequencing rule info has been initialized for this block
         if (sequencingRuleInfo.priceStart == 0) {
             // if not, initialize it with the current price as the start price
