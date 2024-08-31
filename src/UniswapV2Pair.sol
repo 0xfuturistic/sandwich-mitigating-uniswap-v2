@@ -212,11 +212,8 @@ contract UniswapV2Pair is UniswapV2ERC20 {
 
         SequencingRuleInfo storage sequencingRuleInfo = blockSequencingRuleInfo[block.number];
 
-        // compute the current price with WAD precision
-        uint112 price;
-        unchecked {
-            price = (_reserve1 * 1e17) / _reserve0;
-        }
+        // compute the current price with 10 decimals of precision
+        uint112 price = (_reserve1 * 1e10) / _reserve0;
 
         // check if the sequencing rule info has been initialized for this block
         if (sequencingRuleInfo.priceStart == 0) {
