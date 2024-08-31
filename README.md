@@ -1,10 +1,10 @@
-# 🥪🦄 Sandwich-Resistant Uniswap V2
+# 🥪🦄 Sandwich-Mitigating Uniswap V2
 
 <img src="unicorn.png" width="46%">
 
 > **Background:** Matheus V. X. Ferreira and David C. Parkes. _Credible Decentralized Exchange Design via Verifiable Sequencing Rules._ URL: https://arxiv.org/pdf/2209.15569.
 
-Uniswap V2 is minimally modified to implement a verifiable sequencing rule that mitigates sandwich attacks, the Greedy Sequencing Rule (GSR).
+Uniswap V2 is minimally modified to enforce a verifiable sequencing rule that makes sandwich attacks unprofitable. This approach preserves atomic composability and requires no additional infrastructure or off-chain computation. 
 
 ## The Greedy Sequencing Rule (GSR)
 
@@ -46,34 +46,35 @@ This implementation modifies Uniswap V2's smart contracts to enforce the GSR rul
 The key changes are in [`UniswapV2Pair`](src/UniswapV2Pair.sol)'s swap function, adding to it only 16 lines of code (uncommented). [`SwapType`](#swaptype-enum) and [`SequencingRuleInfo`](#sequencingruleinfo-struct) are defined in the [Appendix](#appendix). If a swap violates the GSR, the transaction reverts.
 
 ```solidity
-SequencingRuleInfo public sequencingRuleInfo;
+uint256 private lastSequencedBlock;
+uint112 private blockPriceStart;
+uint8 private blockTailSwapType;
 
 function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external lock {
     // ... existing swap logic ...
-
-    SequencingRuleInfo storage sequencingRuleInfo = blockSequencingRuleInfo[block.number];
 
     // compute the current price with 1e6 decimals (1e18 can easily overflow)
     uint112 price = (_reserve1 * 1e6) / _reserve0;
 
     // check if the sequencing rule info has been initialized for this block
-    if (sequencingRuleInfo.priceStart == 0) {
+    if (block.number != lastSequencedBlock) {
         // if not, initialize it with the current price as the start price
-        sequencingRuleInfo.priceStart = price;
+        lastSequencedBlock = block.number;
+        blockPriceStart = price;
     } else {
         // Determine if this is a buy or sell swap
         uint8 swapType = amount1Out > 0 ? 1 : 2; // 1 for buy, 2 for sell
 
-        if (sequencingRuleInfo.tailSwapType != 0) {
+        if (blockTailSwapType != 0) {
             // We've entered the "tail" of the ordering (Definition 5.2).
             // In the tail, all remaining swaps must be of the same type (Lemma 5.1).
             // This occurs when we've run out of either buy or sell orders.
             // The tailSwapType represents the type of swaps in the tail.
-            require(swapType == sequencingRuleInfo.tailSwapType, "UniswapV2: VIOLATES_GSR");
+            require(swapType == blockTailSwapType, "UniswapV2: VIOLATES_GSR");
         } else {
             // Determine the required swap type based on current reserves
             // This implements the core logic of the Greedy Sequencing Rule
-            uint8 swapTypeExpected = price < sequencingRuleInfo.priceStart ? 1 : 2;
+            uint8 swapTypeExpected = price < blockPriceStart ? 1 : 2;
 
             if (swapType != swapTypeExpected) {
                 // If the swap type doesn't match the required type, we've run out of one type of order
@@ -81,7 +82,7 @@ function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data)
 
                 // The tail swap type is set to the current swap type
                 // All subsequent swaps must be of this type
-                sequencingRuleInfo.tailSwapType = swapType;
+                blockTailSwapType = swapType;
             }
         }
     }

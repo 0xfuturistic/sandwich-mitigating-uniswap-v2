@@ -13,11 +13,6 @@ contract UniswapV2Pair is UniswapV2ERC20 {
     using SafeMath for uint256;
     using UQ112x112 for uint224;
 
-    struct SequencingRuleInfo {
-        uint112 priceStart;
-        uint8 tailSwapType; // 0 for none, 1 for buy, 2 for sell
-    }
-
     uint256 public constant MINIMUM_LIQUIDITY = 10 ** 3;
     bytes4 private constant SELECTOR = bytes4(keccak256(bytes("transfer(address,uint256)")));
 
@@ -35,7 +30,9 @@ contract UniswapV2Pair is UniswapV2ERC20 {
 
     uint256 private unlocked = 1;
 
-    mapping(uint256 blockNumber => SequencingRuleInfo) public blockSequencingRuleInfo;
+    uint256 public lastSequencedBlock;
+    uint112 public blockPriceStart;
+    uint8 public blockTailSwapType; // 0 for none, 1 for buy, 2 for sell
 
     modifier lock() {
         require(unlocked == 1, "UniswapV2: LOCKED");
@@ -203,18 +200,18 @@ contract UniswapV2Pair is UniswapV2ERC20 {
         ///                             SANDWICH ATTACK MITIGATION LOGIC                             ///
         ////////////////////////////////////////////////////////////////////////////////////////////////
 
-        SequencingRuleInfo storage sequencingRuleInfo = blockSequencingRuleInfo[block.number];
         uint112 price = (_reserve1 * 1e6) / _reserve0;
-        if (sequencingRuleInfo.priceStart == 0) {
-            sequencingRuleInfo.priceStart = price;
+        if (block.number != lastSequencedBlock) {
+            lastSequencedBlock = block.number;
+            blockPriceStart = price;
         } else {
-            uint8 swapType = amount1Out > 0 ? 1 : 2;
-            if (sequencingRuleInfo.tailSwapType != 0) {
-                require(swapType == sequencingRuleInfo.tailSwapType, "UniswapV2: VIOLATES_GSR");
+            uint8 swapType = amount1Out > 0 ? 1 : 2; // 1 for buy, 2 for sell
+            if (blockTailSwapType != 0) {
+                require(swapType == blockTailSwapType, "UniswapV2: VIOLATES_GSR");
             } else {
-                uint8 swapTypeExpected = price < sequencingRuleInfo.priceStart ? 1 : 2;
+                uint8 swapTypeExpected = price < blockPriceStart ? 1 : 2;
                 if (swapType != swapTypeExpected) {
-                    sequencingRuleInfo.tailSwapType = swapType;
+                    blockTailSwapType = swapType;
                 }
             }
         }
