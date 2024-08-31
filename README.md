@@ -51,15 +51,18 @@ SequencingRuleInfo public sequencingRuleInfo;
 function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external lock {
     // ... existing swap logic ...
 
-    if (block.number > sequencingRuleInfo.blockNumber) {
-        // We have a new block, so we must reset the sequencing rule info.
-        // This includes the initial token reserves used in the GSR.
-        sequencingRuleInfo.blockNumber = block.number;
-        sequencingRuleInfo.reserve0Start = _reserve0;
-        sequencingRuleInfo.emptyBuysOrSells = false;
+    SequencingRuleInfo storage sequencingRuleInfo = blockSequencingRuleInfo[block.number];
+
+    // compute the current price with 1e6 decimals (1e18 can easily overflow)
+    uint112 price = (_reserve1 * 1e6) / _reserve0;
+
+    // check if the sequencing rule info has been initialized for this block
+    if (sequencingRuleInfo.priceStart == 0) {
+        // if not, initialize it with the current price as the start price
+        sequencingRuleInfo.priceStart = price;
     } else {
         // Determine if this is a buy or sell swap
-        SwapType swapType = amount0Out > 0 ? SwapType.BUY : SwapType.SELL;
+        SwapType swapType = amount0Out > 0 ? SwapType.SELL : SwapType.BUY;
 
         if (sequencingRuleInfo.emptyBuysOrSells) {
             // We've entered the "tail" of the ordering (Definition 5.2).
@@ -70,7 +73,7 @@ function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data)
         } else {
             // Determine the required swap type based on current reserves
             // This implements the core logic of the Greedy Sequencing Rule
-            SwapType requiredSwapType = _reserve0 >= sequencingRuleInfo.reserve0Start ? SwapType.SELL : SwapType.BUY;
+            SwapType requiredSwapType = price >= sequencingRuleInfo.priceStart ? SwapType.SELL : SwapType.BUY;
 
             if (swapType != requiredSwapType) {
                 // If the swap type doesn't match the required type, we've run out of one type of order
@@ -86,6 +89,8 @@ function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data)
     // ... continue with swap execution ...
 }
 ```
+
+If we used `reserve1` values instead prices for making comparisons, as in the paper, minting LP positions could make the algorithm unreliable, because `reserves1` doesn't contain information about the other side of the pool (i.e., `reserves2`). The price, on the other hand, incorporates information about both in the calculation, since price = reserve1 / reserve2. Hence, it is a better measure.
 
 This implementation ensures that the GSR's guarantees are maintained throughout the entire block, even when dealing with an uneven distribution of buy and sell orders. It's computationally efficient and verifiable, allowing anyone to check if the new swap leads to a valid ordering. It does not have any external dependencies, and it does not depend on any off-chain computation, oracles, or additional infrastructure.
 
