@@ -19,14 +19,14 @@ contract UniswapV2Pair is UniswapV2ERC20 {
     }
 
     struct SequencingRuleInfo {
-        uint256 startPrice;
+        uint112 reserve1Start;
         bool emptyBuysOrSells;
         SwapType tailSwapType;
     }
 
     uint256 public constant MINIMUM_LIQUIDITY = 10 ** 3;
     bytes4 private constant SELECTOR = bytes4(keccak256(bytes("transfer(address,uint256)")));
-    uint256 internal constant WAD = 1e18;
+    uint112 internal constant WAD = 1e18;
 
     address public factory;
     address public token0;
@@ -212,21 +212,10 @@ contract UniswapV2Pair is UniswapV2ERC20 {
 
         SequencingRuleInfo storage sequencingRuleInfo = blockSequencingRuleInfo[block.number];
 
-        uint256 price;
-
-        // From https://github.com/Vectorized/solady/blob/main/src/utils/FixedPointMathLib.sol#L128-L138
-        /// @solidity memory-safe-assembly
-        assembly {
-            // Equivalent to `require(y != 0 && (WAD == 0 || x <= type(uint256).max / WAD))`.
-            if iszero(mul(_reserve1, iszero(mul(WAD, gt(_reserve0, div(not(0), WAD)))))) {
-                mstore(0x00, 0x7c5f487d) // `DivWadFailed()`.
-                revert(0x1c, 0x04)
-            }
-            price := div(mul(_reserve0, WAD), _reserve1)
-        }
-
-        if (sequencingRuleInfo.startPrice == 0) {
-            sequencingRuleInfo.startPrice = price;
+        // check if the sequencing rule info has been initialized for this block
+        if (sequencingRuleInfo.reserve1Start == 0) {
+            // if not, initialize it with the current price as the start price
+            sequencingRuleInfo.reserve1Start = _reserve1;
         } else {
             // Determine if this is a buy or sell swap
             SwapType swapType = amount0Out > 0 ? SwapType.SELL : SwapType.BUY;
@@ -237,10 +226,10 @@ contract UniswapV2Pair is UniswapV2ERC20 {
                 // This occurs when we've run out of either buy or sell orders.
                 // The tailSwapType represents the type of swaps in the tail.
                 require(swapType == sequencingRuleInfo.tailSwapType, "UniswapV2: VIOLATES_GSR");
-            } else if (price != sequencingRuleInfo.startPrice) {
+            } else {
                 // Determine the required swap type based on current reserves
                 // This implements the core logic of the Greedy Sequencing Rule
-                SwapType requiredSwapType = price > sequencingRuleInfo.startPrice ? SwapType.BUY : SwapType.SELL;
+                SwapType requiredSwapType = _reserve1 >= sequencingRuleInfo.reserve1Start ? SwapType.SELL : SwapType.BUY;
 
                 if (swapType != requiredSwapType) {
                     // If the swap type doesn't match the required type, we've run out of one type of order
