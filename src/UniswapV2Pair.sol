@@ -204,35 +204,16 @@ contract UniswapV2Pair is UniswapV2ERC20 {
         ////////////////////////////////////////////////////////////////////////////////////////////////
 
         SequencingRuleInfo storage sequencingRuleInfo = blockSequencingRuleInfo[block.number];
-
-        // compute the current price with 1e6 decimals (1e18 can easily overflow)
         uint112 price = (_reserve1 * 1e6) / _reserve0;
-
-        // check if the sequencing rule info has been initialized for this block
         if (sequencingRuleInfo.priceStart == 0) {
-            // if not, initialize it with the current price as the start price
             sequencingRuleInfo.priceStart = price;
         } else {
-            // Determine if this is a buy or sell swap
-            uint8 swapType = amount1Out > 0 ? 1 : 2; // 1 for buy, 2 for sell
-
+            uint8 swapType = amount1Out > 0 ? 1 : 2;
             if (sequencingRuleInfo.tailSwapType != 0) {
-                // We've entered the "tail" of the ordering (Definition 5.2).
-                // In the tail, all remaining swaps must be of the same type (Lemma 5.1).
-                // This occurs when we've run out of either buy or sell orders.
-                // The tailSwapType represents the type of swaps in the tail.
                 require(swapType == sequencingRuleInfo.tailSwapType, "UniswapV2: VIOLATES_GSR");
             } else {
-                // Determine the required swap type based on current reserves
-                // This implements the core logic of the Greedy Sequencing Rule
                 uint8 swapTypeExpected = price < sequencingRuleInfo.priceStart ? 1 : 2;
-
                 if (swapType != swapTypeExpected) {
-                    // If the swap type doesn't match the required type, we've run out of one type of order
-                    // This means we're entering the tail of the ordering
-
-                    // The tail swap type is set to the current swap type
-                    // All subsequent swaps must be of this type
                     sequencingRuleInfo.tailSwapType = swapType;
                 }
             }
