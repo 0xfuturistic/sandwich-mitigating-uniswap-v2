@@ -15,8 +15,7 @@ contract UniswapV2Pair is UniswapV2ERC20 {
 
     struct SequencingRuleInfo {
         uint112 priceStart;
-        bool emptyBuysOrSells;
-        bool tailSwapBuy;
+        uint8 tailSwapType; // 0 for none, 1 for buy, 2 for sell
     }
 
     uint256 public constant MINIMUM_LIQUIDITY = 10 ** 3;
@@ -210,36 +209,32 @@ contract UniswapV2Pair is UniswapV2ERC20 {
         // compute the current price with 1e6 decimals (1e18 can easily overflow)
         uint112 price = (_reserve1 * 1e6) / _reserve0;
 
-        // NOTE: if we used reserve1 values instead prices, as in the paper, minting LP
-        // positions could make the algorithm unreliable. the price, however, incorporates
-        // information about reserve2 in the calculation (since price = reserve1 / reserve2).
-
         // check if the sequencing rule info has been initialized for this block
         if (sequencingRuleInfo.priceStart == 0) {
             // if not, initialize it with the current price as the start price
             sequencingRuleInfo.priceStart = price;
         } else {
             // Determine if this is a buy or sell swap
-            bool isBuy = amount1Out > 0 ? true : false;
+            uint8 swapType = amount1Out > 0 ? 1 : 2; // 1 for buy, 2 for sell
 
-            if (sequencingRuleInfo.emptyBuysOrSells) {
+            if (sequencingRuleInfo.tailSwapType != 0) {
                 // We've entered the "tail" of the ordering (Definition 5.2).
                 // In the tail, all remaining swaps must be of the same type (Lemma 5.1).
                 // This occurs when we've run out of either buy or sell orders.
                 // The tailSwapType represents the type of swaps in the tail.
-                require(isBuy == sequencingRuleInfo.tailSwapBuy, "UniswapV2: VIOLATES_GSR");
+                require(swapType == sequencingRuleInfo.tailSwapType, "UniswapV2: VIOLATES_GSR");
             } else {
                 // Determine the required swap type based on current reserves
                 // This implements the core logic of the Greedy Sequencing Rule
-                bool isBuyExpected = price < sequencingRuleInfo.priceStart ? true : false;
+                uint8 swapTypeExpected = price < sequencingRuleInfo.priceStart ? 1 : 2;
 
-                if (isBuy != isBuyExpected) {
+                if (swapType != swapTypeExpected) {
                     // If the swap type doesn't match the required type, we've run out of one type of order
                     // This means we're entering the tail of the ordering
-                    sequencingRuleInfo.emptyBuysOrSells = true;
+
                     // The tail swap type is set to the current swap type
                     // All subsequent swaps must be of this type
-                    sequencingRuleInfo.tailSwapBuy = isBuy;
+                    sequencingRuleInfo.tailSwapType = swapType;
                 }
             }
         }
