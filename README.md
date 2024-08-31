@@ -46,7 +46,7 @@ This implementation modifies Uniswap V2's smart contracts to enforce the GSR rul
 The key changes are in [`UniswapV2Pair`](src/UniswapV2Pair.sol)'s swap function, adding to it only 16 lines of code (uncommented). [`SwapType`](#swaptype-enum) and [`SequencingRuleInfo`](#sequencingruleinfo-struct) are defined in the [Appendix](#appendix). If a swap violates the GSR, the transaction reverts.
 
 ```solidity
-uint256 private lastSequencedBlock;
+uint136 public lastSequencedBlock;
 uint112 private blockPriceStart;
 uint8 private blockTailSwapType;
 
@@ -59,7 +59,7 @@ function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data)
     // check if the sequencing rule info has been initialized for this block
     if (block.number != lastSequencedBlock) {
         // if not, initialize it with the current price as the start price
-        lastSequencedBlock = block.number;
+        lastSequencedBlock = uint136(block.number);
         blockPriceStart = price;
     } else {
         // Determine if this is a buy or sell swap

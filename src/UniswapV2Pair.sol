@@ -30,7 +30,7 @@ contract UniswapV2Pair is UniswapV2ERC20 {
 
     uint256 private unlocked = 1;
 
-    uint256 public lastSequencedBlock;
+    uint136 public lastSequencedBlock;
     uint112 public blockPriceStart;
     uint8 public blockTailSwapType; // 0 for none, 1 for buy, 2 for sell
 
@@ -202,7 +202,7 @@ contract UniswapV2Pair is UniswapV2ERC20 {
 
         uint112 price = (_reserve1 * 1e6) / _reserve0;
         if (block.number != lastSequencedBlock) {
-            lastSequencedBlock = block.number;
+            lastSequencedBlock = uint136(block.number);
             blockPriceStart = price;
         } else {
             uint8 swapType = amount1Out > 0 ? 1 : 2; // 1 for buy, 2 for sell
