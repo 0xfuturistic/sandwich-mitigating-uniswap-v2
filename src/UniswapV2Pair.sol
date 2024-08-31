@@ -19,7 +19,7 @@ contract UniswapV2Pair is UniswapV2ERC20 {
     }
 
     struct SequencingRuleInfo {
-        uint112 reserve1Start;
+        uint112 priceStart;
         bool emptyBuysOrSells;
         SwapType tailSwapType;
     }
@@ -212,10 +212,16 @@ contract UniswapV2Pair is UniswapV2ERC20 {
 
         SequencingRuleInfo storage sequencingRuleInfo = blockSequencingRuleInfo[block.number];
 
+        // compute the current price with WAD precision
+        uint112 price;
+        unchecked {
+            price = (_reserve1 * 1e17) / _reserve0;
+        }
+
         // check if the sequencing rule info has been initialized for this block
-        if (sequencingRuleInfo.reserve1Start == 0) {
+        if (sequencingRuleInfo.priceStart == 0) {
             // if not, initialize it with the current price as the start price
-            sequencingRuleInfo.reserve1Start = _reserve1;
+            sequencingRuleInfo.priceStart = price;
         } else {
             // Determine if this is a buy or sell swap
             SwapType swapType = amount0Out > 0 ? SwapType.SELL : SwapType.BUY;
@@ -229,7 +235,7 @@ contract UniswapV2Pair is UniswapV2ERC20 {
             } else {
                 // Determine the required swap type based on current reserves
                 // This implements the core logic of the Greedy Sequencing Rule
-                SwapType requiredSwapType = _reserve1 >= sequencingRuleInfo.reserve1Start ? SwapType.SELL : SwapType.BUY;
+                SwapType requiredSwapType = price >= sequencingRuleInfo.priceStart ? SwapType.SELL : SwapType.BUY;
 
                 if (swapType != requiredSwapType) {
                     // If the swap type doesn't match the required type, we've run out of one type of order
