@@ -13,15 +13,10 @@ contract UniswapV2Pair is UniswapV2ERC20 {
     using SafeMath for uint256;
     using UQ112x112 for uint224;
 
-    enum SwapType {
-        BUY,
-        SELL
-    }
-
     struct SequencingRuleInfo {
         uint112 priceStart;
         bool emptyBuysOrSells;
-        SwapType tailSwapType;
+        bool tailSwapBuy;
     }
 
     uint256 public constant MINIMUM_LIQUIDITY = 10 ** 3;
@@ -225,26 +220,26 @@ contract UniswapV2Pair is UniswapV2ERC20 {
             sequencingRuleInfo.priceStart = price;
         } else {
             // Determine if this is a buy or sell swap
-            SwapType swapType = amount0Out > 0 ? SwapType.SELL : SwapType.BUY;
+            bool isBuy = amount1Out > 0 ? true : false;
 
             if (sequencingRuleInfo.emptyBuysOrSells) {
                 // We've entered the "tail" of the ordering (Definition 5.2).
                 // In the tail, all remaining swaps must be of the same type (Lemma 5.1).
                 // This occurs when we've run out of either buy or sell orders.
                 // The tailSwapType represents the type of swaps in the tail.
-                require(swapType == sequencingRuleInfo.tailSwapType, "UniswapV2: VIOLATES_GSR");
+                require(isBuy == sequencingRuleInfo.tailSwapBuy, "UniswapV2: VIOLATES_GSR");
             } else {
                 // Determine the required swap type based on current reserves
                 // This implements the core logic of the Greedy Sequencing Rule
-                SwapType requiredSwapType = price >= sequencingRuleInfo.priceStart ? SwapType.SELL : SwapType.BUY;
+                bool isBuyExpected = price < sequencingRuleInfo.priceStart ? true : false;
 
-                if (swapType != requiredSwapType) {
+                if (isBuy != isBuyExpected) {
                     // If the swap type doesn't match the required type, we've run out of one type of order
                     // This means we're entering the tail of the ordering
                     sequencingRuleInfo.emptyBuysOrSells = true;
                     // The tail swap type is set to the current swap type
                     // All subsequent swaps must be of this type
-                    sequencingRuleInfo.tailSwapType = swapType;
+                    sequencingRuleInfo.tailSwapBuy = isBuy;
                 }
             }
         }
