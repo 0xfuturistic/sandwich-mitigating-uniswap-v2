@@ -95,7 +95,32 @@ If we used `reserve1` values instead prices for making comparisons, as in the pa
 
 This implementation ensures that the GSR's guarantees are maintained throughout the entire block, even when dealing with an uneven distribution of buy and sell orders. It's computationally efficient and verifiable, allowing anyone to check if the new swap leads to a valid ordering. It does not have any external dependencies, and it does not depend on any off-chain computation, oracles, or additional infrastructure.
 
-## How does it prevent sandwich attacks?
+### Gas Cost
+
+#### Pre-changes
+
+| UniswapV2Pair contract |       |        |        |        |         |
+|------------------------|-------|--------|--------|--------|---------|
+| Function Name          | min   | avg    | median | max    | # calls |
+| swap                   | 64888 | 64900  | 64910  | 64910  | 26      |
+
+#### Post-changes
+
+| UniswapV2Pair contract |       |        |        |        |         |
+|------------------------|-------|--------|--------|--------|---------|
+| Function Name          | min   | avg    | median | max    | # calls |
+| swap                   | 67628 | 74341  | 70568  | 87498  | 26      |
+
+The following table shows the difference in gas costs before and after the changes.
+
+| $\Delta$      |        |        |        |        |
+|---------------|--------|--------|--------|--------|
+| Function Name | min    | avg    | median | max    |
+| swap          | +4.22% | +14.5% | +8.72% | +34.8% |
+
+It's important to note that while it has increased, the gas cost of the swap function may be largely offset by the value otherwise lost to sandwich attacks. This is because the two are independent from each other.
+
+## How does this prevent sandwich attacks?
 
 Consider the following example, where $T$ is an execution ordering over swaps in the same block for a [`UniswapV2Pair`](src/UniswapV2Pair.sol) instance:
 1. The proposer exexcutes the swap for the first side of the sandwich attack (a buy order) as $T_1$.
