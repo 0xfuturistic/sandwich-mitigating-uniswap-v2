@@ -9,5 +9,6 @@ remappings = [
     "openzeppelin/=lib/openzeppelin-contracts/contracts/",
 ]
 
+solc = "0.8.25"
 optimizer = true
 optimizer_runs = 999999
