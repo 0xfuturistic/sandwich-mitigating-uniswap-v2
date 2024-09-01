@@ -4,7 +4,7 @@
 
 > **Background:** Matheus V. X. Ferreira and David C. Parkes. _Credible Decentralized Exchange Design via Verifiable Sequencing Rules._ URL: https://arxiv.org/pdf/2209.15569.
 
-Uniswap V2 is minimally modified to enforce a verifiable sequencing rule that makes sandwich attacks unprofitable. This approach preserves atomic composability and requires no additional infrastructure or off-chain computation. 
+Uniswap V2 is minimally modified to enforce a verifiable sequencing, the Greedy Sequencing Rule, which makes sandwich attacks unprofitable. This approach preserves atomic composability and requires no additional infrastructure or off-chain computation. 
 
 ## The Greedy Sequencing Rule (GSR)
 
@@ -91,7 +91,7 @@ function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data)
 }
 ```
 
-If we used `reserve1` values instead prices for making comparisons, as in the paper, minting LP positions could make the algorithm unreliable, because `reserves1` doesn't contain information about the other side of the pool (i.e., `reserves2`). The price, on the other hand, incorporates information about both in the calculation, since price = reserve1 / reserve2. Hence, it is a better measure.
+If we used `reserve1` values instead prices for making comparisons, as in the paper, minting LP positions could make the algorithm unreliable, because `reserves1` doesn't contain information about the other side of the pool that also changes (i.e., `reserves2`). The price, on the other hand, incorporates information about both in the calculation, since `price = reserve1 / reserve2`. Hence, it is a better measure.
 
 This implementation ensures that the GSR's guarantees are maintained throughout the entire block, even when dealing with an uneven distribution of buy and sell orders. It's computationally efficient and verifiable, allowing anyone to check if the new swap leads to a valid ordering. It does not have any external dependencies, and it does not depend on any off-chain computation, oracles, or additional infrastructure.
 
