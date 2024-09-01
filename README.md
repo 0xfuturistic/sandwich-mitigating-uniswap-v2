@@ -105,28 +105,28 @@ This implementation ensures that the GSR's guarantees are maintained throughout 
 
 ### Gas Cost
 
-These gas reports were done with the optimizer enabled, 999,999 runs, and Solidity version 0.8.23.
+These gas reports were done with the optimizer enabled, 999,999 runs, and Solidity version 0.8.25.
 
 #### Without changes
 
 | UniswapV2Pair contract |       |        |        |        |         |
 |------------------------|-------|--------|--------|--------|---------|
 | Function Name          | min   | avg    | median | max    | # calls |
-| swap                   | 64354 | 64365  | 64374  | 64374  | 26      |
+| swap                   | 64410 | 64419  | 64410  | 64432  | 26      |
 
 #### With changes
 
 | UniswapV2Pair contract |       |        |        |        |         |
 |------------------------|-------|--------|--------|--------|---------|
 | Function Name          | min   | avg    | median | max    | # calls |
-| swap                   | 67092 | 73799  | 70025  | 86945  | 26      |
+| swap                   | 67084 | 73804  | 70033  | 86945  | 26      |
 
 The following table shows the difference in gas costs before and after the changes.
 
 | $\Delta$      |        |         |        |         |
 |---------------|--------|---------|--------|---------|
 | Function Name | min    | avg     | median | max     |
-| swap          | +4.25% | +14.66% | +8.78% | +35.06% |
+| swap          | +4.15% | +14.57% | +8.73% | +34.94% |
 
 It's important to note that while it has increased, the gas cost of the swap function may be largely offset by the value saved from sandwich attacks. This is because the two are independent.
 
