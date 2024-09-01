@@ -43,12 +43,12 @@ The algorithm is as follows:
 
 This implementation modifies Uniswap V2's smart contracts to enforce the GSR rule on swaps. Unlike the [verifier algorithm in the paper](#ferreira--parkes-2023-gsr-verifier-algorithm), which iterates through the entire execution ordering, our algorithm assumes that the execution ordering before adding a swap is valid, and then just validates the new swap in $O(1)$. This leads to a verifier algorithm in $O(1)$, better suited for this implementation than the paper's algorithm in $O(|T|)$.
 
-The key changes are in [`UniswapV2Pair`](src/UniswapV2Pair.sol)'s swap function, adding to it only 16 lines of code (uncommented). [`SwapType`](#swaptype-enum) and [`SequencingRuleInfo`](#sequencingruleinfo-struct) are defined in the [Appendix](#appendix). If a swap violates the GSR, the transaction reverts.
+The key changes are in [`UniswapV2Pair`](src/UniswapV2Pair.sol)'s swap function. If a swap violates the GSR, the transaction reverts.
 
 ```solidity
 uint136 public lastSequencedBlock;
-uint112 private blockPriceStart;
-uint8 private blockTailSwapType;
+uint112 public blockPriceStart;
+uint8 public blockTailSwapType;
 
 function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external lock {
     // ... existing swap logic ...
@@ -97,28 +97,30 @@ This implementation ensures that the GSR's guarantees are maintained throughout 
 
 ### Gas Cost
 
+This gas report was done with the optimizer enabled, 999,999 runs, and Solidity version 0.8.23.
+
 #### Pre-changes
 
 | UniswapV2Pair contract |       |        |        |        |         |
 |------------------------|-------|--------|--------|--------|---------|
 | Function Name          | min   | avg    | median | max    | # calls |
-| swap                   | 64888 | 64900  | 64910  | 64910  | 26      |
+| swap                   | 64354 | 64365  | 64374  | 64374  | 26      |
 
 #### Post-changes
 
 | UniswapV2Pair contract |       |        |        |        |         |
 |------------------------|-------|--------|--------|--------|---------|
 | Function Name          | min   | avg    | median | max    | # calls |
-| swap                   | 67628 | 74341  | 70568  | 87498  | 26      |
+| swap                   | 67043 | 73734  | 69953  | 86879  | 26      |
 
 The following table shows the difference in gas costs before and after the changes.
 
-| $\Delta$      |        |        |        |        |
-|---------------|--------|--------|--------|--------|
-| Function Name | min    | avg    | median | max    |
-| swap          | +4.22% | +14.5% | +8.72% | +34.8% |
+| $\Delta$      |        |         |        |         |
+|---------------|--------|---------|--------|---------|
+| Function Name | min    | avg     | median | max     |
+| swap          | +4.18% | +14.56% | +8.67% | +34.96% |
 
-It's important to note that while it has increased, the gas cost of the swap function may be largely offset by the value otherwise lost to sandwich attacks. This is because the two are independent from each other.
+It's important to note that while it has increased, the gas cost of the swap function may be largely offset by value saved from sandwich attacks. This is because the two are independent.
 
 ## How does this prevent sandwich attacks?
 
@@ -165,23 +167,3 @@ It outputs $True$ or $False$, and proceeds as follows:
     3. If $X_{t-1,1} < X_{0,1}$ and $T_{t}$ is a sell order, then output $False$.
     4. Let $X_{t}$ be the state after $T_{t}$ executes on $X_{t-1}$.
 2. Output $True$.
-
-### `SwapType` Enum
-
-```solidity
-enum SwapType {
-    BUY, // A buy order
-    SELL // A sell order
-}
-```
-
-### `sequencingRuleInfo` Struct
-
-```solidity
-struct SequencingRuleInfo {
-    uint256 blockNumber; // The block number the last time `swap` was called
-    uint112 reserve0Start; // The initial reserves of token 0 at the beginning of `blockNumber`
-    bool emptyBuysOrSells; // A flag indicating whether the ordering implies empy buys or sells.
-    SwapType tailSwapType; // The type of swaps making up the tail, if `emptyBuysOrSells` is true
-}
-```
