@@ -46,7 +46,7 @@ Additionally, if we used `reserve1` values instead of prices for making comparis
 The key changes are in [`UniswapV2Pair`](src/UniswapV2Pair.sol)'s swap function. If a swap would lead to an invalid order according to the GSR, the transaction reverts.
 
 <details open>
-<summary>Code</summary>
+<summary>Solidity</summary>
 
 ```solidity
 uint136 public lastSequencedBlockNumber;
