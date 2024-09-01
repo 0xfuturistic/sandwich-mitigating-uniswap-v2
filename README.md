@@ -45,6 +45,9 @@ Additionally, if we used `reserve1` values instead of prices for making comparis
 
 The key changes are in [`UniswapV2Pair`](src/UniswapV2Pair.sol)'s swap function. If a swap would lead to an invalid order according to the GSR, the transaction reverts.
 
+<details open>
+<summary>Code</summary>
+
 ```solidity
 uint136 public lastSequencedBlockNumber;
 uint112 public blockPriceStart; // price at the start of the block
@@ -75,16 +78,13 @@ function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data)
             // determine the required swap type based on the current price 
             // and the price at the start of the block.
             // this implements the core logic of the Greedy Sequencing Rule.
-            // We follow the same type as blockTailSwapType: uint8.
+            // we follow the same type as blockTailSwapType: uint8.
             uint8 swapTypeExpected = price >= blockPriceStart ? 1 : 2;
 
             if (swapType != swapTypeExpected) {
                 // if the swap type doesn't match the required type, we've
                 // run out of at least one type of order.
-                // this means we're entering the tail of the ordering
-
                 // the tail swap type is set to the current swap type
-                // all subsequent swaps must be of this type
                 blockTailSwapType = swapType;
             }
         } else {
@@ -99,6 +99,7 @@ function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data)
     // ... continue with swap execution ...
 }
 ```
+</details>
 
 This implementation ensures that the GSR's guarantees are maintained throughout the entire block, even when dealing with an uneven distribution of buy and sell orders. It's computationally efficient and verifiable, allowing anyone to check if the new swap leads to a valid ordering. It does not have any external dependencies, and it does not depend on any off-chain computation, oracles, or additional infrastructure.
 
