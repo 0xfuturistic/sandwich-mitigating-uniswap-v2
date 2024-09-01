@@ -31,81 +31,81 @@ contract SandwichResistanceTest is Test {
     /// @notice Tests a simple sandwich attack
     function test_simpleSandwich_fails() public {
         // first buy
-        token0.transfer(address(pair), 1 ether);
-        pair.swap(0, 0.99 ether, address(this), "");
+        token1.transfer(address(pair), 1 ether);
+        pair.swap(0.99 ether, 0, address(this), "");
 
         // second buy
-        token0.transfer(address(pair), 1 ether);
-        pair.swap(0, 0.83 ether, address(this), "");
+        token1.transfer(address(pair), 1 ether);
+        pair.swap(0.83 ether, 0, address(this), "");
 
         // sell
-        token1.transfer(address(pair), 1 ether);
+        token0.transfer(address(pair), 1 ether);
         vm.expectRevert("UniswapV2: VIOLATES_GSR");
-        pair.swap(0.99 ether, 0, address(this), "");
+        pair.swap(0, 0.99 ether, address(this), "");
     }
 
     /// @notice Tests a simple sandwich attack
     function test_simpleSandwich2_fails() public {
         // first buy
-        token0.transfer(address(pair), 1 ether);
-        pair.swap(0, 0.99 ether, address(this), "");
+        token1.transfer(address(pair), 1 ether);
+        pair.swap(0.99 ether, 0, address(this), "");
 
         // second buy
-        token0.transfer(address(pair), 1 ether);
-        pair.swap(0, 0.83 ether, address(this), "");
+        token1.transfer(address(pair), 1 ether);
+        pair.swap(0.83 ether, 0, address(this), "");
 
         // sell
-        token1.transfer(address(pair), 1 ether);
+        token0.transfer(address(pair), 1 ether);
         vm.expectRevert("UniswapV2: VIOLATES_GSR");
-        pair.swap(0.99 ether, 0, address(this), "");
+        pair.swap(0, 0.99 ether, address(this), "");
     }
 
     /// @notice Tests a complex sandwich attack
     function test_complexSandwich_fails() public {
         // first buy
+        token1.transfer(address(pair), 1 ether);
+        pair.swap(0.99 ether, 0, address(this), "");
+
+        // sell
         token0.transfer(address(pair), 1 ether);
         pair.swap(0, 0.99 ether, address(this), "");
 
-        // sell
-        token1.transfer(address(pair), 1 ether);
-        pair.swap(0.99 ether, 0, address(this), "");
-
         // second buy
-        token0.transfer(address(pair), 1 ether);
-        pair.swap(0, 0.83 ether, address(this), "");
+        token1.transfer(address(pair), 1 ether);
+        pair.swap(0.83 ether, 0, address(this), "");
 
         // third buy
-        token0.transfer(address(pair), 1 ether);
-        pair.swap(0, 0.59 ether, address(this), "");
+        token1.transfer(address(pair), 1 ether);
+        pair.swap(0.59 ether, 0, address(this), "");
 
         // sell
-        token1.transfer(address(pair), 1 ether);
+        token0.transfer(address(pair), 1 ether);
         vm.expectRevert("UniswapV2: VIOLATES_GSR");
-        pair.swap(0.99 ether, 0, address(this), "");
+        pair.swap(0, 0.99 ether, address(this), "");
     }
 
     /// @notice Tests a complex sandwich attack
     function test_complexSandwich2_fails() public {
         // first buy
+        token1.transfer(address(pair), 1 ether);
+        pair.swap(0.99 ether, 0, address(this), "");
+
+        // sell
         token0.transfer(address(pair), 1 ether);
         pair.swap(0, 0.99 ether, address(this), "");
 
-        // sell
-        token1.transfer(address(pair), 1 ether);
-        pair.swap(0.99 ether, 0, address(this), "");
-
         // second buy
-        token0.transfer(address(pair), 1 ether);
-        pair.swap(0, 0.83 ether, address(this), "");
+        token1.transfer(address(pair), 1 ether);
+        pair.swap(0.83 ether, 0, address(this), "");
 
         // third buy
-        token0.transfer(address(pair), 1 ether);
-        pair.swap(0, 0.59 ether, address(this), "");
+        token1.transfer(address(pair), 1 ether);
+        pair.swap(0.59 ether, 0, address(this), "");
 
         // sell
-        token1.transfer(address(pair), 1 ether);
+        token0.transfer(address(pair), 1 ether);
         vm.expectRevert("UniswapV2: VIOLATES_GSR");
-        pair.swap(0.99 ether, 0, address(this), "");
+        pair.swap(0, 0.99 ether, address(this), "");
     }
 
     /// @notice Tests for empty buys in the same block
@@ -134,7 +134,7 @@ contract SandwichResistanceTest is Test {
         pair.swap(0, 0.83 ether, address(this), "");
 
         // third sell in the same block
-        token1.transfer(address(pair), 1 ether);
+        token0.transfer(address(pair), 1 ether);
         pair.swap(0, 0.59 ether, address(this), "");
     }
 
