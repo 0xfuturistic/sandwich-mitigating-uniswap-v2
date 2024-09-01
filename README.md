@@ -35,7 +35,7 @@ The algorithm is as follows:
         - Append any order from $B_{buy}$ to $T$ and remove it from $B_{buy}$.
     - Else:
         - Append any order from $B_{sell}$ to $T$ and remove it from $B_{sell}$.
-4. If any orders remain, append them to $T$ in any order.
+4. If any swaps remain, append them to $T$ in any order.
 
 ## Implementation
 
@@ -43,7 +43,7 @@ This implementation modifies Uniswap V2's smart contracts to enforce the GSR rul
 
 Additionally, if we used `reserve1` values instead of prices for making comparisons, as in the paper, minting LP positions could make the algorithm unreliable, because `reserve1` doesn't contain information about the other side of the pool that also changes (i.e., `reserve2`). The price, on the other hand, incorporates information about both in the calculation, since `price = reserve1 / reserve2`. Hence, we use `price` instead of `reserve1`.
 
-The key changes are in [`UniswapV2Pair`](src/UniswapV2Pair.sol)'s swap function. If a swap would lead to an invalid order according to the GSR, the transaction reverts.
+The key changes are in [`UniswapV2Pair`](src/UniswapV2Pair.sol)'s swap function. If a swap would lead to an invalid transaction ordering according to the GSR, the transaction reverts.
 
 <details open>
 <summary>Solidity</summary>
@@ -155,7 +155,7 @@ Consider the following example, where $T$ is an execution ordering over swaps in
 
 > **Theorem 4.2.** For a class of liquidity pool exchanges (that includes Uniswap), for any sequencing rule, there are instances where the proposer has a profitable risk-free undetectable deviation.
 
-2. The builder needs to follow the [GSR algorithm](#gsr-algorithm) to obtain several valid swaps in the same block. In the simplest terms, for a new block, they have to include buys and sells in alternating order until they run out of either. After that, they get to include the remaining in any order.
+2. The builder needs to follow the [GSR algorithm](#gsr-algorithm) to obtain several valid swaps in the same block. In the simplest terms, for a new block, they have to include buys and sells in alternating order until they run out of either. After that, they get to include the remaining swaps in any order.
     - Would it be unfeasible to include orders in alternating order while subscribing to priority ordering?
 3. As the paper [_MEV Makes Everyone Happy under Greedy Sequencing Rule_](https://arxiv.org/pdf/2309.12640) shows, when there is no trading fee, a polynomial time algorithm for a proposer to compute an optimal strategy is given. However, when trading fees aren't zero, it is NP-hard to find an optimal strategy. This means that, in practice, builders may not have the computational resources to always find the optimal strategy.
 4. Multi-block MEV remains a concern. A builder controlling consecutive blocks could potentially implement a sandwich attack spanning several blocks risk-free, circumventing the GSR.
