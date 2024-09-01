@@ -4,7 +4,7 @@
 
 > **Background:** Matheus V. X. Ferreira and David C. Parkes. [_Credible Decentralized Exchange Design via Verifiable Sequencing Rules_](https://arxiv.org/pdf/2209.15569).
 
-Uniswap V2 is minimally modified to enforce a verifiable sequencing rule, the Greedy Sequencing Rule, which makes sandwich attacks unprofitable. This approach preserves atomic composability and requires no additional infrastructure or off-chain computation.
+Uniswap V2 is minimally modified to enforce on swaps a verifiable sequencing rule, the Greedy Sequencing Rule, which makes sandwich attacks unprofitable. This approach preserves atomic composability and requires no additional infrastructure or off-chain computation.
 
 ## The Greedy Sequencing Rule (GSR)
 
