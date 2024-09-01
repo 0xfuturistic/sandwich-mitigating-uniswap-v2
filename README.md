@@ -127,7 +127,7 @@ The following table shows the difference in gas costs before and after the chang
 | Function Name | min    | avg     | median | max     |
 | swap          | +4.25% | +14.66% | +8.78% | +35.06% |
 
-It's important to note that while it has increased, the gas cost of the swap function may be largely offset by the value saved from sandwich attacks. This is because the two are generally independent.
+It's important to note that while it has increased, the gas cost of the swap function may be largely offset by the value saved from sandwich attacks. This is because the two are independent.
 
 ## How does this prevent sandwich attacks?
 
