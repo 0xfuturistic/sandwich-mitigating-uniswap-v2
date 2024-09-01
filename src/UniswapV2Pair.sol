@@ -30,7 +30,7 @@ contract UniswapV2Pair is UniswapV2ERC20 {
 
     uint256 private unlocked = 1;
 
-    uint136 public lastSequencedBlock;
+    uint136 public lastSequencedBlockNumber;
     uint112 public blockPriceStart;
     uint8 public blockTailSwapType; // 0 for none, 1 for buy, 2 for sell
 
@@ -201,18 +201,19 @@ contract UniswapV2Pair is UniswapV2ERC20 {
         ////////////////////////////////////////////////////////////////////////////////////////////////
 
         uint112 price = (_reserve1 * 1e6) / _reserve0;
-        if (block.number != lastSequencedBlock) {
-            lastSequencedBlock = uint136(block.number);
+        if (block.number != lastSequencedBlockNumber) {
+            lastSequencedBlockNumber = uint136(block.number);
             blockPriceStart = price;
+            blockTailSwapType = 0; // no tail swaps yet
         } else {
-            uint8 swapType = amount1Out > 0 ? 1 : 2; // 1 for buy, 2 for sell
-            if (blockTailSwapType != 0) {
-                require(swapType == blockTailSwapType, "UniswapV2: VIOLATES_GSR");
-            } else {
-                uint8 swapTypeExpected = price < blockPriceStart ? 1 : 2;
+            uint8 swapType = amount0Out > 0 ? 1 : 2; // 1 for buy, 2 for sell
+            if (blockTailSwapType == 0) {
+                uint8 swapTypeExpected = price >= blockPriceStart ? 1 : 2; // 1 for buy, 2 for sell
                 if (swapType != swapTypeExpected) {
                     blockTailSwapType = swapType;
                 }
+            } else {
+                require(swapType == blockTailSwapType, "UniswapV2: VIOLATES_GSR");
             }
         }
     }
