@@ -133,11 +133,11 @@ It's important to note that while it has increased, the gas cost of the swap fun
 ## How does this prevent sandwich attacks?
 
 Consider the following example, where $T$ is an execution ordering over swaps in the same block for a [`UniswapV2Pair`](src/UniswapV2Pair.sol) instance:
-1. The builder includes the swap for the first side of the sandwich attack (a buy order) as $T_1$, to front-run the user's swap.
+1. The proposer (or builder in PBS) includes the swap for the first side of the sandwich attack (a buy order) as $T_1$, to front-run the user's swap.
 2. Then, it includes the user's swap (a buy order) as $T_2$.
     - The algorithm recognizes that any sell order would have received a better execution than another buy order.
-    - Therefore, the algorithm assumes that the builder must have run out of sell orders, so the builder is restricted to only include buy orders for the remainder of the block, starting at $T_3$.
-3. The builder tries to include the swap for the final side of the sandwich attack (a sell order) as $T_3$, but the transaction reverts.
+    - Therefore, the algorithm assumes that the proposer must have run out of sell orders, so the proposer is restricted to only include buy orders for the remainder of the block, starting at $T_3$.
+3. The proposer tries to include the swap for the final side of the sandwich attack (a sell order) as $T_3$, but the transaction reverts.
     - The order is not a buy order, as restricted by the GSR.
 
 ## Benefits
@@ -151,14 +151,14 @@ Consider the following example, where $T$ is an execution ordering over swaps in
 
 ## Limitations and Future Work
 
-1. While the GSR prevents classic sandwich attacks, it doesn't eliminate all forms of MEV. The paper [_Credible Decentralized Exchange Design via Verifiable Sequencing Rules_](https://arxiv.org/pdf/2209.15569) proves that for any sequencing rule, there exist scenarios where proposers (builders) can still obtain risk-free profits.
+1. While the GSR prevents classic sandwich attacks, it doesn't eliminate all forms of MEV. The paper [_Credible Decentralized Exchange Design via Verifiable Sequencing Rules_](https://arxiv.org/pdf/2209.15569) proves that for any sequencing rule, there exist scenarios where proposers (proposers) can still obtain risk-free profits.
 
 > **Theorem 4.2.** For a class of liquidity pool exchanges (that includes Uniswap), for any sequencing rule, there are instances where the proposer has a profitable risk-free undetectable deviation.
 
-2. The builder needs to follow the [GSR algorithm](#gsr-algorithm) to obtain several valid swaps in the same block. In the simplest terms, for a new block, they have to include buys and sells in alternating order until they run out of either. After that, they get to include the remaining swaps in any order.
+2. The proposer needs to follow the [GSR algorithm](#gsr-algorithm) to obtain several valid swaps in the same block. In the simplest terms, for a new block, they have to include buys and sells in alternating order until they run out of either. After that, they get to include the remaining swaps in any order.
     - Would it be unfeasible to include orders in alternating order while subscribing to priority ordering?
-3. As the paper [_MEV Makes Everyone Happy under Greedy Sequencing Rule_](https://arxiv.org/pdf/2309.12640) shows, when there is no trading fee, a polynomial time algorithm for a proposer to compute an optimal strategy is given. However, when trading fees aren't zero, it is NP-hard to find an optimal strategy. This means that, in practice, builders may not have the computational resources to always find the optimal strategy.
-4. Multi-block MEV remains a concern. A builder controlling consecutive blocks could potentially implement a sandwich attack spanning several blocks risk-free, circumventing the GSR.
+3. As the paper [_MEV Makes Everyone Happy under Greedy Sequencing Rule_](https://arxiv.org/pdf/2309.12640) shows, when there is no trading fee, a polynomial time algorithm for a proposer to compute an optimal strategy is given. However, when trading fees aren't zero, it is NP-hard to find an optimal strategy. This means that, in practice, proposers may not have the computational resources to always find the optimal strategy.
+4. Multi-block MEV remains a concern. A proposer controlling consecutive blocks could potentially implement a sandwich attack spanning several blocks risk-free, circumventing the GSR.
 5. Pools implementing the GSR seem to have price discovery issues when there are 3 or more pools for the same asset.
 
 # Appendix
