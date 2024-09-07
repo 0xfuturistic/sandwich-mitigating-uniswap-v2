@@ -2,25 +2,24 @@
 
 <img src="unicorn.png" width="46%">
 
-> **Background:** Matheus V. X. Ferreira and David C. Parkes. [_Credible Decentralized Exchange Design via Verifiable Sequencing Rules_](https://arxiv.org/pdf/2209.15569).
+// TODO: check that (2023) below is right
+> **Background:** Matheus V. X. Ferreira and David C. Parkes (2023). [_Credible Decentralized Exchange Design via Verifiable Sequencing Rules_](https://arxiv.org/pdf/2209.15569)
 
-Uniswap V2 is minimally modified to enforce on swaps a verifiable sequencing rule, the Greedy Sequencing Rule, which makes sandwich attacks unprofitable. This approach preserves atomic composability and requires no additional infrastructure or off-chain computation.
+Uniswap V2 is minimally modified to enforce a verifiable sequencing rule, the _Greedy Sequecing Rule_, which makes sandwich attacks unprofitable. This approach preserves atomic composability, has zero external dependencies, and is entirely oracle-free.
 
 ## The Greedy Sequencing Rule (GSR)
 
 The GSR provides strong execution guarantees for users. It leverages a key property of two-token liquidity pools: the Duality Theorem.
 
-> **Theorem 5.1** (Duality Theorem)**.** For any pair of states $X, X'$ in a liquidity pool exchange with potential $\phi$, either: <br>- Any buy order receives a better execution at $X$ than $X'$, or <br>- Any sell order receives a better execution at $X$ than $X'$. 
+> **Theorem 5.1** (Duality Theorem)**.** For any pair of states $X, X'$ in a liquidity pool exchange with potential $\phi$, either: <br>- Any buy order receives a better execution at $X$ than $X'$, or <br>- Any sell order receives a better execution at $X$ than $X'$.
 
-This theorem forms the foundation for the GSR, which follows this algorithm:
+This theorem forms the foundation for the GSR. The proposer would then follow this algorithm:
 
-- Execute any buy or any sell order, whichever receives better execution (per Theorem 5.1).
-- Continue this process until buys or sells are exhausted.
-- Include all remaining swaps in any order.
+1. Execute any buy or any sell order, whichever receives better execution than at block start (per Theorem 5.1).
+2. Repeat until either buys or sells are exhausted.
+3. Include all remaining swaps in any order (permutation).
 
 > **Theorem 5.2** Greedy Sequencing Rule (GSR)**.** We specify a sequencing rule (the Greedy Sequencing Rule) such that, for any valid execution ordering, then for any user transaction $A$ that the proposer includes in the block, it must be one of the following: <br>1. The user efficiently detects the proposer did not respect the sequencing rule. <br>2. The execution price of $A$ is at least as good as if $A$ was the only transaction in the block. <br>3. The execution price of $A$ is worse but the proposer does not gain when including $A$ in the block.
-
-A key assumption is that proposers for contiguous blocks are _not_ controlled by the same party. Weakening this assumption shows how a sandwich attack spanning multiple blocks could be executed. Assume $B_i$ and $B_i+1$ are two contiguous blocks controlled by the same party. The proposer for $B_i$ includes the sandwich's first leg (the transaction front-running the user), followed by the user's swap, at the end of the block. This would not be blocked by the GSR because the third transaction is missing. However, in the next block, the proposer for $B_i+1$ includes the final leg of the sandwich attack, where they profit. They were able to sandwich the user's swap risk-free.
 
 ### GSR Algorithm
 
@@ -158,7 +157,9 @@ Consider the following example, where $T$ is an execution ordering over swaps in
 2. The proposer needs to follow the [GSR algorithm](#gsr-algorithm) to obtain several valid swaps in the same block. In the simplest terms, for a new block, they have to include buys and sells in alternating order until they run out of either. After that, they get to include the remaining swaps in any order.
     - Would it be unfeasible to include orders in alternating order while subscribing to priority ordering?
 3. As the paper [_MEV Makes Everyone Happy under Greedy Sequencing Rule_](https://arxiv.org/pdf/2309.12640) shows, when there is no trading fee, a polynomial time algorithm for a proposer to compute an optimal strategy is given. However, when trading fees aren't zero, it is NP-hard to find an optimal strategy. This means that, in practice, proposers may not have the computational resources to always find the optimal strategy.
-4. Multi-block MEV remains a concern. A proposer controlling consecutive blocks could potentially implement a sandwich attack spanning several blocks risk-free, circumventing the GSR.
+4. A key assumption is that proposers for contiguous blocks are _not_ controlled by the same party. If that were the case, this party could implement a sandwich attack spanning several blocks risk-free, circumventing the GSR.
+    -  Assume $B_i$ and $B_i+1$ are two contiguous blocks controlled by the same party. The proposer for $B_i$ includes the sandwich's first leg (the transaction front-running the user), followed by the user's swap, at the end of the block. This would not be blocked by the GSR because the third transaction is missing. However, in the next block, the proposer for $B_i+1$ includes the final leg of the sandwich attack, where they profit. They were able to sandwich the user's swap risk-free.
+
 5. Pools implementing the GSR seem to have price discovery issues when there are 3 or more pools for the same asset.
 
 # Appendix
